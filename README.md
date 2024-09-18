@@ -1,3 +1,5 @@
+<p><img style="padding: 0 15px; float: left;" src="FTLogo300.jpg" alt="FT Crusader Logo" Width='100' Height= '100'/></p> 
+
 ## OpenDataNYC Initiative
 #### by Abu Nayeem
 
