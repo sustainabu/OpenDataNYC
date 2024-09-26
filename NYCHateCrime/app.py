@@ -242,9 +242,9 @@ with ui.nav_panel("Data"):
              
         with ui.nav_menu("Links"):
             with ui.nav_control():
-                ui.a("Exploratory Analysis Report", href="https://nbviewer.org/github/sustainabu/OpenDataNYC/blob/main/Public%20Safety/NYC%20Hate%20Crime%20Report.ipynb", target="_blank")
+                ui.a("Exploratory Analysis Report", href="https://nbviewer.org/github/sustainabu/OpenDataNYC/blob/main/NYCHateCrime/NYC%20Hate%20Crime%20ReportU.ipynb", target="_blank")
                 ui.a("Data Source", href="https://data.cityofnewyork.us/Public-Safety/NYPD-Hate-Crimes/bqiq-cu78/about_data", target="_blank")
-                ui.a("Github", href="https://nbviewer.org/github/sustainabu/OpenDataNYC/blob/main/Public%20Safety/NYC%20Hate%20Crime%20Report.ipynb", target="_blank")
+                ui.a("Github", href="https://github.com/sustainabu/OpenDataNYC/tree/main/NYCHateCrime", target="_blank")
 
 with ui.nav_panel("About"):
     ui.markdown(
@@ -253,7 +253,7 @@ with ui.nav_panel("About"):
             * All the hate crimes are confirmed by the NYPD since 2019
             * Only '40%' led to an arrest. 
             * About '50%' of hate crimes were anti-Jewish
-            * Some data entries were excluded you can learn more in [exploratory analysis report]()
+            * Some data entries were excluded you can learn more in [exploratory analysis report](https://nbviewer.org/github/sustainabu/OpenDataNYC/blob/main/NYCHateCrime/NYC%20Hate%20Crime%20ReportU.ipynb)
             ### ABOUT the Parameters 
             * Date-Range: impact all tables
             * Biased Group: impact all tables except Bias Map
