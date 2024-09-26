@@ -1,0 +1,12 @@
+{
+    "https://api.shinyapps.io": {
+        "server_url": "https://api.shinyapps.io",
+        "filename": "C:\\Users\\anaye\\OneDrive\\Documents\\GitHub\\OpenDataNYC\\Public Safety",
+        "app_url": "https://sustainabu.shinyapps.io/stopthehate/",
+        "app_id": 12827694,
+        "app_guid": null,
+        "title": "HateNotOkay",
+        "app_mode": "python-shiny",
+        "app_store_version": 1
+    }
+}
