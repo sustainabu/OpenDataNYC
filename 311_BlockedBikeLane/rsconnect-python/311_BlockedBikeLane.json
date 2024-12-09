@@ -1,0 +1,12 @@
+{
+    "https://api.shinyapps.io": {
+        "server_url": "https://api.shinyapps.io",
+        "filename": "C:\\Users\\anaye\\OneDrive\\Documents\\GitHub\\OpenDataNYC\\311_BlockedBikeLane",
+        "app_url": "https://sustainabu.shinyapps.io/blockedbikelanedashboard/",
+        "app_id": 13562504,
+        "app_guid": null,
+        "title": "BlockedBikeLaneDashboard",
+        "app_mode": "python-shiny",
+        "app_store_version": 1
+    }
+}

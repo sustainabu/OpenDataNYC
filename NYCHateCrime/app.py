@@ -177,69 +177,11 @@ with ui.nav_panel("Data"):
                 return NYC_map
 
         with ui.nav_panel("Bias Map"):
-            @render.ui
-            def bias_map():
-                NYC_map = folium.Map(location=[40.7128466, -73.9138168], zoom_start=10, tiles="OpenStreetMap")
-                # Create a title element
-                title_html = '''
-                            <h3 align="center" style="font-size:20px"><b>Interactive Hate Crime Map by Police Precinct!! (Bias Count on hover)</b></h3>
-                            '''
-                title = folium.Element(title_html)
-
-                # Add the title to the map
-                NYC_map.get_root().html.add_child(title)
-
-                # Get Total by Precinct
-                p=['precinct','index_']
-                df1=f_dfb()[p].groupby(['precinct']).sum().reset_index()
-                df1.columns=['precinct','total']
-                A=pd.merge(state, df1, on='precinct', how='right') 
-
-                # Get Total by Offense1
-                p2=['precinct','bias','index_']
-                pv=f_dfb()[p2].groupby(['precinct','bias']).sum().reset_index()
-                pv2=pd.pivot_table(pv,index='precinct', columns='bias', values=['index_']).reset_index().fillna(0)
-                pv2.columns= ['precinct','Asian','Black','Catholic','Gay','Hispanic','Jewish','Lesbian','Muslim','Other Ethnicity','Transgender','White']
-                geomerge= pd.merge(A, pv2, on='precinct', how='right') 
-
-                colormap = branca.colormap.LinearColormap(
-                vmin=geomerge["total"].quantile(0.0),
-                vmax=geomerge["total"].quantile(1),
-                colors=["white", "pink", "orange", "red", "darkred"],
-                caption=("NYC Hate Crimes Map by biased group".format(input.ticker())),
+            ui.markdown(
+                '''
+                   <div class="flourish-embed flourish-map" data-src="visualisation/19737527"><script src="https://public.flourish.studio/resources/embed.js"></script><noscript><img src="https://public.flourish.studio/visualisation/19737527/thumbnail" width="100%" alt="map visualization" /></noscript></div>
+                '''
                 )
-
-                tooltip = folium.GeoJsonTooltip(
-                    fields=['precinct','Asian','Black','Catholic','Gay','Hispanic','Jewish','Lesbian','Muslim','Other Ethnicity','Transgender','White'],
-                    #aliases=["State:", "2015 Median Income(USD):", "Median % Change:"],
-                    localize=True,
-                    sticky=False,
-                    labels=True,
-                    style="""
-                        background-color: #F0EFEF;
-                        border: 1px solid black;
-                        border-radius: 1px;
-                        box-shadow: 1px;
-                    """,
-                    max_width=800,
-                )
-
-                g = folium.GeoJson(
-                    geomerge,
-                    style_function=lambda x: {
-                        "fillColor": colormap(x["properties"]["total"])
-                        if x["properties"]["total"] is not None
-                        else "transparent",
-                        "weight":1.5, #set thickness
-                        "color": "black",
-                        "fillOpacity": 0.6,
-                    },
-                    tooltip=tooltip,
-                    #popup=popup,
-                ).add_to(NYC_map)
-                colormap.add_to(NYC_map)
-                return NYC_map
-             
         with ui.nav_menu("Links"):
             with ui.nav_control():
                 ui.a("Exploratory Analysis Report", href="https://nbviewer.org/github/sustainabu/OpenDataNYC/blob/main/NYCHateCrime/NYC%20Hate%20Crime%20ReportU.ipynb", target="_blank")
@@ -267,5 +209,4 @@ with ui.nav_panel("About"):
             * I'm currently looking for job opportunities feel free to reach out to me (Abu: anayeem1@gmail.com)
         '''
         )
-
 
