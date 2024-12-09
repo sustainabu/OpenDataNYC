@@ -8,7 +8,7 @@ from shiny import reactive
 from shiny.express import input, render, ui, session
 import json
 import branca
-import geopandas
+#import geopandas
 import plotly.express as px
 from shinywidgets import render_plotly
 import matplotlib.pyplot as plt
@@ -28,13 +28,13 @@ df.dateTime = df.dateTime.dt.date
 df.index_=df.index_.astype(int)
 df.MinutesElapsed=df.MinutesElapsed.astype(float)
 #GeOMAPPING
-df.cboard=df.cboard.astype(int)  #needed for proper merge
-state= geopandas.GeoDataFrame.from_features(cboard_geo, crs="EPSG:4326")
-d=['geometry','boro_cd']
-state= state[d]
-state.columns=['geometry','cboard']
+#df.cboard=df.cboard.astype(int)  #needed for proper merge
+#state= geopandas.GeoDataFrame.from_features(cboard_geo, crs="EPSG:4326")
+#d=['geometry','boro_cd']
+#state= state[d]
+#state.columns=['geometry','cboard']
 #Input Variable Options
-board_options= ('All',"01 MANHATTAN", "02 MANHATTAN", "03 MANHATTAN", "04 MANHATTAN", "05 MANHATTAN", "06 MANHATTAN", "07 MANHATTAN", "08 MANHATTAN", "09 MANHATTAN", "10 MANHATTAN", "11 MANHATTAN", "12 MANHATTAN", "01 BRONX", "02 BRONX", "03 BRONX", "04 BRONX", "05 BRONX", "06 BRONX", "07 BRONX", "08 BRONX", "09 BRONX", "11 BRONX", "12 BRONX", "26 BRONX", "01 BROOKLYN", "02 BROOKLYN", "03 BROOKLYN", "04 BROOKLYN", "05 BROOKLYN", "06 BROOKLYN", "07 BROOKLYN", "08 BROOKLYN", "09 BROOKLYN", "10 BROOKLYN", "13 BROOKLYN", "14 BROOKLYN", "15 BROOKLYN", "18 BROOKLYN", "01 QUEENS", "02 QUEENS", "03 QUEENS", "04 QUEENS", "05 QUEENS", "06 QUEENS", "07 QUEENS", "11 QUEENS", "12 QUEENS", "14 QUEENS")
+board_options= ('All',"01 MANHATTAN", "02 MANHATTAN", "03 MANHATTAN", "04 MANHATTAN", "05 MANHATTAN", "06 MANHATTAN", "07 MANHATTAN", "08 MANHATTAN", "09 MANHATTAN", "10 MANHATTAN", "11 MANHATTAN", "12 MANHATTAN", "01 BRONX", "02 BRONX", "03 BRONX", "04 BRONX", "05 BRONX", "06 BRONX", "07 BRONX", "08 BRONX", "09 BRONX","10 BRONX", "11 BRONX", "12 BRONX", "26 BRONX", "01 BROOKLYN", "02 BROOKLYN", "03 BROOKLYN", "04 BROOKLYN", "05 BROOKLYN", "06 BROOKLYN", "07 BROOKLYN", "08 BROOKLYN", "09 BROOKLYN", "10 BROOKLYN","11 BROOKLYN","12 BROOKLYN", "13 BROOKLYN", "14 BROOKLYN", "15 BROOKLYN","16 BROOKLYN","17 BROOKLYN", "18 BROOKLYN", "01 QUEENS", "02 QUEENS", "03 QUEENS", "04 QUEENS", "05 QUEENS", "06 QUEENS", "07 QUEENS","08 QUEENS","09 QUEENS","10 QUEENS", "11 QUEENS", "12 QUEENS","13 QUEENS", "14 QUEENS","01 STATEN ISLAND","02 STATEN ISLAND","03 STATEN ISLAND")
 
 #4. Create Primary Reactive Table
 @reactive.calc
@@ -63,7 +63,6 @@ with ui.sidebar():
     ui.input_date_range("date_range", "Select date range", start="2023-01-01",min="2023-01-01")
     ui.input_selectize("ticker", "Select community board", choices=board_options, selected="All")
     ui.input_numeric("obs", "Minimum Service Request", 5, min=1, max=10) 
-    ui.input_slider("val", "Slider label", min=0, max=100, value=50)
 
 
 #3. Input Options 
