@@ -46,13 +46,6 @@ def f_df():
         mf=mf[(mf['community_board'] == input.ticker())]      
     return mf
 
-# Secondary Reactive
-@reactive.calc
-def f_dfb():
-    mf = df[(df["dateTime"] >= input.date_range()[0]) & (df["dateTime"] <= input.date_range()[1])]
-    return mf
-
-
 # Display
 ui.page_opts(title="311 Blocked Bike Lane Service Request Dashboard by Abu Nayeem 12/08/24 (View on Desktop)")
 ui.nav_spacer()  # Push the navbar items to the right
@@ -62,7 +55,7 @@ ui.nav_spacer()  # Push the navbar items to the right
 with ui.sidebar():
     ui.input_date_range("date_range", "Select date range", start="2023-01-01",min="2023-01-01")
     ui.input_selectize("ticker", "Select community board", choices=board_options, selected="All")
-    ui.input_numeric("obs", "Minimum Service Request", 5, min=1, max=10) 
+    ui.input_numeric("obs", "Select Min. Entries for Map", 5, min=1, max=10) 
 
 
 #3. Input Options 
@@ -71,7 +64,7 @@ with ui.nav_panel("Data"):
     ui.include_css(app_dir / "styles.css")
     ui.markdown(
     '''          
-            The data is from 01/01/19 to 07/23/24. Click on `Links` for analysis report and other info
+            Up Click on `Links` for analysis report and other info
     '''
     )
     with ui.navset_pill(id="tab"):  
