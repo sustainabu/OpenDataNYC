@@ -64,7 +64,7 @@ with ui.nav_panel("Data"):
     ui.include_css(app_dir / "styles.css")
     ui.markdown(
     '''          
-            Up Click on `Links` for analysis report and other info
+            [Updated: 12/6/24] Click on `Links` for Exploratory Analysis and Other Info
     '''
     )
     with ui.navset_pill(id="tab"):  
@@ -313,9 +313,9 @@ with ui.nav_panel("Data"):
                 )
         with ui.nav_menu("Links"):
             with ui.nav_control():
-                ui.a("Exploratory Analysis Report", href="https://nbviewer.org/github/sustainabu/OpenDataNYC/blob/main/NYCHateCrime/NYC%20Hate%20Crime%20ReportU.ipynb", target="_blank")
+                ui.a("Exploratory Analysis Report", href="https://nbviewer.org/github/sustainabu/OpenDataNYC/blob/main/311_BlockedBikeLane/BlockBikeLane%20Report.ipynb", target="_blank")
                 ui.a("Data Source", href="https://data.cityofnewyork.us/Social-Services/311-Service-Requests-from-2010-to-Present/erm2-nwe9/about_data/", target="_blank")
-                ui.a("Github", href="https://github.com/sustainabu/OpenDataNYC/tree/main/311", target="_blank")
+                ui.a("Github", href="https://github.com/sustainabu/OpenDataNYC/tree/main/311_BlockedBikeLane", target="_blank")
 
 
 with ui.nav_panel("About"):
@@ -330,7 +330,7 @@ with ui.nav_panel("About"):
             * The **police response time** is the difference between the opening & closing of the service request. Pay attention to requests ending immediately, and prolonged response.
             * Police resolutions were classified into four categories: Miss, Action, No-Action, and Summons. 
             * Around 75% of service requests led to 'No-Action" or NYPD "Missing" the violators.
-            * Learn More in the [data report]](https://nbviewer.org/github/sustainabu/OpenDataNYC/blob/main/NYCHateCrime/NYC%20Hate%20Crime%20ReportU.ipynb)
+            * Learn More in the [data report]](https://nbviewer.org/github/sustainabu/OpenDataNYC/blob/main/311_BlockedBikeLane/BlockBikeLane%20Report.ipynb)
             ### Next Steps
             * The anaylsis can be improved if there is geo-validation to police precinct
             * I'm interested to explore using crowd-source validation as means to verify and hold NYPD accountable. If your a developer, let's chat
