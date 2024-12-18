@@ -1,6 +1,3 @@
-
-
-
 body {
   background-color: #dceaf5;
 }
@@ -33,7 +30,6 @@ body > .container {
   background-color: #90EE90 !important; /* Light green hover effect */
   color: #004466 !important;            /* Hover text color */
 }
-
 
 /* Selected Tab Style */
 .nav-link.active {
@@ -72,4 +68,41 @@ h4, .dataframe-title {
   display: flex !important;
   justify-content: flex-end !important; /* Align to the right */
   width: 100%;                         /* Full width for alignment */
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  body > .container {
+    max-width: 90% !important; /* Use a more flexible width */
+    padding-top: 2rem;
+    padding-bottom: 3rem;
+  }
+
+  .card-header, 
+  .card-body, 
+  .card-footer {
+    padding-right: 1rem;
+    padding-left: 1rem;
+  }
+
+  .card-body .shiny-input-container {
+    width: 100% !important; /* Adjust input container width */
+  }
+
+  .nav-link {
+    font-size: 14px !important; /* Reduce font size for smaller screens */
+    padding: 8px 8px !important; /* Adjust padding for tabs */
+  }
+
+  h4, .dataframe-title {
+    font-size: 16px !important; /* Reduce title font size */
+  }
+
+  .nav-pills {
+    justify-content: center !important; /* Center tabs on mobile */
+  }
+
+  .navset-card-underline .nav {
+    justify-content: center !important; /* Center inner tabs */
+  }
 }
