@@ -1,3 +1,6 @@
+
+
+
 body {
   background-color: #dceaf5;
 }
@@ -22,5 +25,51 @@ body > .container {
 }
 
 .card-body .shiny-input-container {
-  width: 100% !important;
+  width: 300% !important;
+}
+
+/* Hover Effects */
+.nav-link:hover {
+  background-color: #90EE90 !important; /* Light green hover effect */
+  color: #004466 !important;            /* Hover text color */
+}
+
+
+/* Selected Tab Style */
+.nav-link.active {
+  background-color: #004466 !important; /* Background color of selected tab */
+  color: white !important;              /* Text color of selected tab */
+  border: 1px solid #004466 !important; /* Border for selected tab */
+}
+
+/* General Tab Styles */
+.nav-link {
+  color: #333333 !important;         /* Default tab text color */
+  font-size: 16px !important;        /* Font size */
+  border: 1px solid #1d1616 !important; /* Add visible boundaries */
+  margin-right: 4px !important;      /* Spacing between tabs */
+  padding: 10px 10px !important;     /* Padding inside tabs */
+  border-radius: 5px !important;     /* Rounded corners */
+}
+
+/* DataFrame Title */
+h4, .dataframe-title {
+  text-align: center !important;        /* Center the title above the table */
+  font-size: 18px !important;
+  color: #333333;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+/* Upper Tabs (Align Left) */
+.nav-pills {
+  display: flex !important;
+  justify-content: flex-end !important; /* Align to the left */
+}
+
+/* Inner Tabs (Align Right) */
+.navset-card-underline .nav {
+  display: flex !important;
+  justify-content: flex-end !important; /* Align to the right */
+  width: 100%;                         /* Full width for alignment */
 }
