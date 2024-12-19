@@ -10,20 +10,6 @@ body > .container {
   padding-bottom: 5rem;
 }
 
-.card-header, 
-.card-body, 
-.card-footer {
-  padding-right: 1.75rem;
-  padding-left: 1.75rem;
-}
-
-.card {
-  padding-bottom: 1rem;
-}
-
-.card-body .shiny-input-container {
-  width: 300% !important;
-}
 
 /* Hover Effects */
 .nav-link:hover {
@@ -43,15 +29,15 @@ body > .container {
   color: #333333 !important;         /* Default tab text color */
   font-size: 16px !important;        /* Font size */
   border: 1px solid #1d1616 !important; /* Add visible boundaries */
-  margin-right: 4px !important;      /* Spacing between tabs */
-  padding: 10px 10px !important;     /* Padding inside tabs */
-  border-radius: 5px !important;     /* Rounded corners */
+  margin-right: 3px !important;      /* Spacing between tabs */
+  padding: 6px 6px !important;     /* Padding inside tabs */
+  border-radius: 4px !important;     /* Rounded corners */
 }
 
 /* DataFrame Title */
 h4, .dataframe-title {
   text-align: center !important;        /* Center the title above the table */
-  font-size: 18px !important;
+  font-size: 16px !important;
   color: #333333;
   margin-top: 10px;
   margin-bottom: 10px;
@@ -70,39 +56,6 @@ h4, .dataframe-title {
   width: 100%;                         /* Full width for alignment */
 }
 
-/* Responsive Styles */
-@media (max-width: 768px) {
-  body > .container {
-    max-width: 90% !important; /* Use a more flexible width */
-    padding-top: 2rem;
-    padding-bottom: 3rem;
-  }
 
-  .card-header, 
-  .card-body, 
-  .card-footer {
-    padding-right: 1rem;
-    padding-left: 1rem;
-  }
 
-  .card-body .shiny-input-container {
-    width: 100% !important; /* Adjust input container width */
-  }
 
-  .nav-link {
-    font-size: 14px !important; /* Reduce font size for smaller screens */
-    padding: 8px 8px !important; /* Adjust padding for tabs */
-  }
-
-  h4, .dataframe-title {
-    font-size: 16px !important; /* Reduce title font size */
-  }
-
-  .nav-pills {
-    justify-content: center !important; /* Center tabs on mobile */
-  }
-
-  .navset-card-underline .nav {
-    justify-content: center !important; /* Center inner tabs */
-  }
-}

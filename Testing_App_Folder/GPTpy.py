@@ -1,109 +1,182 @@
-from shiny import App, ui, reactive, render
-from shinywidgets import render_plotly
-import plotly.express as px
+import seaborn as sns
 import pandas as pd
-import folium
-import json
 from pathlib import Path
+from datetime import datetime
+import folium
+import shinywidgets
+from shiny import reactive
+from shiny.express import input, render, ui, session
+import json
+import plotly.express as px
+from shinywidgets import render_plotly
+import matplotlib.pyplot as plt
+from htmltools import tags, HTML
 
-# 1. Load data
-app_dir = Path(__file__).parent
+#1.Read local files 
+app_dir = Path(__file__).parent #set environment local
+#dataframe
 df = pd.read_csv(app_dir / "dfc_out.csv")
-with open(app_dir / "CommunityDistricts.geojson", "r") as f:
-    cboard_geo = json.load(f)
 
-# Prepare data
-df['dateTime'] = pd.to_datetime(df['dateTime'], format='%Y-%m-%d').dt.date
-board_options = ["All"] + sorted(df['cboard_name'].dropna().unique())
+#2. Data Prep
+#Prepare Time Data for filter
+df.dateTime=pd.to_datetime(df['dateTime'], format='%Y-%m-%d')
+df.dateTime = df.dateTime.dt.date
+df.index_=df.index_.astype(int)
+df.MinutesElapsed=df.MinutesElapsed.astype(float)
 
-# 2. UI Configuration
-app_ui = ui.page_fluid(
-    ui.h1("311 Blocked Bike Lane Service Request Dashboard by Abu Nayeem"),
-    ui.nav_spacer()  # Add other elements here
-)
+board_options = ["All"] + sorted(df['cboard_name'].dropna().astype(str).unique())
 
-with ui.page_fluid():
-    ui.include_css(app_dir / "styles.css")  # Custom CSS for further styling
 
-    with ui.sidebar(collapsible=True):  # Collapsible sidebar for better mobile layout
-        ui.input_date_range(
-            "date_range", "Select date range",
-            start="2023-01-01", min="2023-01-01"
-        )
-        ui.input_selectize(
-            "ticker", "Select community board",
-            choices=board_options, selected="All"
-        )
-        ui.input_numeric("obs", "Min. Entries for Map Display", 3, min=1, max=10)
 
-    # Dashboard content
-    with ui.nav_panel("Dashboard"):
-        ui.markdown("""
-        **View Analysis**: [Interactive Report](https://example.com/report)  
-        """)
-        with ui.navset_card_underline():
-            with ui.nav_panel("Data"):
-                @render.plot
-                def line_chart():
-                    # Dynamic chart sizing for responsiveness
-                    fig = px.line(
-                        df, x="dateTime", y="MinutesElapsed", title="Response Time Trends",
-                        labels={"dateTime": "Date", "MinutesElapsed": "Minutes"}
-                    )
-                    fig.update_layout(
-                        width="100%", height=400,  # Responsive chart dimensions
-                        margin=dict(l=20, r=20, t=40, b=20)
-                    )
-                    return fig
+#Test CSS
+df_styles = [
+    {
+        "location": "body",
+        "style": {
+            "border": "0.5px solid black"
+        },
+    },
+    {
+        "location": "body",
+        "rows": [0,2],
+        "style": {
+            "background-color": "#FFE5B4",
+        },
+    },
+    {
+        "location": "body",
+        "rows": [1,3],
+        "style": {
+            "background-color": "#f4ebfe",
+        },
+    },
+    {
+        "location": "body",
+        "rows": [4],
+        "style": {
+            "background-color": "yellow",
+        },
+    },
+        {
+        "location": "body",
+        "cols": [2,3,4,5,6,7,8],
+        "style": {
+            "text-align": "right",
+        },
+    },
+        {
+        "location": "body",
+        "cols": [0],
+        "style": {
+            "font-weight": "bold",
+        },
+    },
+]
 
-            with ui.nav_panel("Interactive Map"):
-                @render.ui
-                def interactive_map():
-                    # Dynamic map sizing and configuration
-                    map_ = folium.Map(location=[40.7128, -74.0060], zoom_start=11, tiles="CartoDB positron")
-                    return map_
+#Test CSS
+df_styles1 = [
+    {
+        "location": "body",
+        "style": {
+            "border": "0.5px solid black"
+        },
+    },
+    {
+        "location": "body",
+        "rows": [0,2,4,6,8,10,12,14,16,18,20,22,24],
+        "style": {
+            "background-color": "#FFE5B4",
+        },
+    },
+    {
+        "location": "body",
+        "rows": [1,3,5,7,9,11,13,15,17,19,21,23],
+        "style": {
+            "background-color": "#f4ebfe",
+        },
+    },
+    {
+        "location": "body",
+        "cols": [3,4],
+        "style": {
+            "text-align": "right",
+        },
+    },
+    {
+        "location": "body",
+        "cols": [5],  # Target the 6th column (index 5)
+        "style": {
+            "width": "300px",  # Adjust the width as needed
+            "white-space": "normal",  # Allow text wrapping if necessary
+        },
+    },
+]
 
-            with ui.nav_panel("Table"):
-                @render.data_frame
-                def summary_table():
-                    return df.head(20)
-
-    with ui.nav_panel("About"):
-        ui.markdown("This app showcases 311 bike lane service requests.")
-
-# 3. Reactive Logic
+#4. Create Primary Reactive Table
 @reactive.calc
-def filtered_data():
-    data = df[(df["dateTime"] >= input.date_range()[0]) & (df["dateTime"] <= input.date_range()[1])]
+def f_df():
+    mf = df[(df["dateTime"] >= input.date_range()[0]) & (df["dateTime"] <= input.date_range()[1])]
     if input.ticker() != "All":
-        data = data[data["cboard_name"] == input.ticker()]
-    return data
+        mf = mf[mf["cboard_name"] == input.ticker()]
+    return mf
 
-# 4. CSS Adjustments for Responsiveness
-with open(app_dir / "styles.css", "w") as css_file:
-    css_file.write("""
-    body {
-        font-family: Arial, sans-serif;
-        margin: 0;
-        padding: 0;
-    }
-    .container {
-        max-width: 100%; /* Full width for mobile */
-        margin: 0 auto;
-        padding: 1rem;
-    }
-    .sidebar {
-        width: 100%; /* Sidebar takes full width on smaller screens */
-    }
-    .nav-panel {
-        margin: 1rem;
-    }
-    @media (max-width: 768px) {
-        .sidebar {
-            display: none; /* Collapsible for smaller screens */
-        }
-    }
-    """)
 
-# 5. Run App
-app = App(ui, reactive)
+
+
+# Display
+ui.page_opts(title="311 Blocked Bike Lane Dashboard")
+ui.nav_spacer()  # Push the navbar items to the right
+
+
+# Inputting Slideer
+with ui.sidebar():
+    ui.input_date_range("date_range", "Select date range", start="2023-01-01",min="2023-01-01")
+    ui.input_selectize("ticker", "Select community board", choices=board_options, selected="All")
+    ui.input_numeric("obs", "Select Min. Entries for Map Display", 3, min=1, max=10) 
+
+
+#3. Input Options 
+
+
+with ui.nav_panel("Dashboard"):
+    ui.include_css(app_dir / "styles.css")
+    ui.markdown(
+    '''          
+            [Date Updated: 12/17/24]; View Exploratory Data Analysis [HERE](https://nbviewer.org/github/sustainabu/OpenDataNYC/blob/main/311_BlockedBikeLane/BlockBikeLane%20Report.ipynb)
+    '''
+    )
+    with ui.navset_pill(id="tab"):
+        with ui.nav_panel("Data"):
+            with ui.navset_card_underline():
+                with ui.nav_panel("Resolution Distribution"):
+                    @render.plot
+                    def pieplot1():
+                        p2=['resolution','index_']
+                        gf=f_df()[p2].groupby(['resolution']).sum().reset_index()
+                        gf.columns=['resolution','Count']
+                        Total = f_df().index_.sum() 
+                        fig=plt.pie(gf.Count, labels=gf.resolution, autopct='%1.0f%%')
+                        plt.title('{} NYPD Blocked Bike Lane Resolution ({} records)'.format(input.ticker(),Total))
+                        plt.xlabel('')
+                        return fig
+                with ui.nav_panel("Recent 25 records"):
+                    @render.text
+                    def header_text1():
+                        return "{} Recent 25 'Closed' 311 Blocked Bike Lane Service Request from {} to {}".format(
+                            input.ticker(), input.date_range()[0], input.date_range()[1]
+                        )
+                    @render.data_frame
+                    def B_df():
+                        p=['date','Time','incident_address','MinutesElapsed','resolution','resolution_description']
+                        B= f_df()[p]
+                        B.columns= ['Date','Time','Address','Response_Mins','Resolution','Description']
+                        return render.DataTable(
+                            B.head(25),width="1200px", height="500px",styles=df_styles1
+                        )
+
+        with ui.nav_menu("Sources"):
+            with ui.nav_control():
+                ui.a("Exploratory Analysis Report", href="https://nbviewer.org/github/sustainabu/OpenDataNYC/blob/main/311_BlockedBikeLane/BlockBikeLane%20Report.ipynb", target="_blank")
+                ui.a("311 Service Requests", href="https://data.cityofnewyork.us/Social-Services/311-Service-Requests-from-2010-to-Present/erm2-nwe9/about_data/", target="_blank")
+                ui.a("Github", href="https://github.com/sustainabu/OpenDataNYC/tree/main/311_BlockedBikeLane", target="_blank")
+
