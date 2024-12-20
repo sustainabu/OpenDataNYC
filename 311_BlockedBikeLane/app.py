@@ -258,7 +258,9 @@ with ui.nav_panel("Data"):
                     final_df,
                     height='100%',
                     styles=df_styles,
+                    width='100%',
                     )
+            
         with ui.nav_panel("History"):
             @render.plot
             def lineplot1():
@@ -292,7 +294,7 @@ with ui.nav_panel("Data"):
                 B= f_df()[p]
                 B.columns= ['Date','Time','Address','Response_Mins','Resolution']
                 return render.DataTable(
-                    B.head(25), height="500",styles=df_styles1,
+                    B.head(25),styles=df_styles1, width='100%'
                 )
             
 with ui.nav_panel("Interactive Maps"):
@@ -507,7 +509,7 @@ with ui.nav_panel("Interactive Maps"):
         
 with ui.nav_menu("Links"):
     with ui.nav_control():
-        ui.a("Exploratory Report", href="https://nbviewer.org/github/sustainabu/OpenDataNYC/blob/main/311_BlockedBikeLane/BlockBikeLane%20Report.ipynb", target="_blank")
+        ui.a("Exploratory Report", href="https://nbviewer.org/github/sustainabu/OpenDataNYC/blob/996df4443b7c624ddf1a349dfdac4be2fe196e0c/311_BlockedBikeLane/BlockBikeLane%20Report_Update.ipynb", target="_blank")
         ui.a("AI Traffic Study", href="https://nyc.streetsblog.org/2024/10/29/study-exposes-nypds-systemic-failure-to-enforce-safety-related-parking-violations", target="_blank")
         ui.a("311 Service Data", href="https://data.cityofnewyork.us/Social-Services/311-Service-Requests-from-2010-to-Present/erm2-nwe9/about_data/", target="_blank")
         ui.a("Github", href="https://github.com/sustainabu/OpenDataNYC/tree/main/311_BlockedBikeLane", target="_blank")
@@ -526,7 +528,7 @@ with ui.nav_panel("About"):
             * The **police response time** is the difference between the opening & closing of the service request. Pay attention to requests ending immediately, and prolonged response.
             * Police resolutions were classified into four categories: Miss, Action, No-Action, and Summons. 
             * Around 75% of service requests led to 'No-Action" or NYPD "Missing" the violators.
-            * Learn More in the [data report](https://nbviewer.org/github/sustainabu/OpenDataNYC/blob/main/311_BlockedBikeLane/BlockBikeLane%20Report.ipynb)
+            * Learn More in the [data report](https://nbviewer.org/github/sustainabu/OpenDataNYC/blob/996df4443b7c624ddf1a349dfdac4be2fe196e0c/311_BlockedBikeLane/BlockBikeLane%20Report_Update.ipynb)
             ### Next Steps
             * The anaylsis can be improved if there is geo-validation to police precinct
             * I'm interested to explore using crowd-source validation as means to verify and hold NYPD accountable. If your a developer, let's chat
