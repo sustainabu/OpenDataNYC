@@ -134,8 +134,6 @@ ui.page_opts(title="311 Blocked Bike Lane Dashboard")
 ui.nav_spacer()  # Push the navbar items to the right
 
 
-
-
 # Inputting Slideer
 with ui.sidebar():    
     ui.tags.script(
@@ -158,7 +156,32 @@ with ui.sidebar():
 
 #3. Input Options 
 
-with ui.nav_panel("Data"):
+with ui.nav_panel("Welcome"):
+    ui.markdown(
+        '''
+            ### Data
+            * Each record is a reported 311 request. [Data Source]("https://data.cityofnewyork.us/Social-Services/311-Service-Requests-from-2010-to-Present/erm2-nwe9/about_data/")
+            * NYPD resolution is binned to 4 categories [table below].
+            * Call-Density is the frequency of calls for NYPD response
+            * SELECT parameters at bottom (or left), and analysis on menu.
+        '''
+        )
+    
+    @render.image  
+    def image():
+        img = {"src": app_dir / "Table1.png", "width": "400px"}  
+        return img    
+           
+    ui.markdown(
+        '''
+            ### Purpose
+            * Investigative reporting provided evidence of NYPD [non-responsiveness](https://nyc.streetsblog.org/2024/10/29/study-exposes-nypds-systemic-failure-to-enforce-safety-related-parking-violations) and [malpractice](https://nyc.streetsblog.org/2023/04/06/nypd-tickets-fewer-than-2-of-blocked-bike-lane-complaints-analysis). 
+            * This is community TOOL to monitor and measure progress of holding NYPD accountable.
+            * To learn more, see [Exploratory Report](https://nbviewer.org/github/sustainabu/OpenDataNYC/blob/996df4443b7c624ddf1a349dfdac4be2fe196e0c/311_BlockedBikeLane/BlockBikeLane%20Report_Update.ipynb)
+        '''
+        )
+
+with ui.nav_panel("Data Analysis"):
     ui.include_css(app_dir / "styles.css")
     ui.markdown('''[Updated: 12/17/24]; For mobile: select parameters BELOW and access MAPS on menu''')
     with ui.navset_card_underline():
@@ -173,6 +196,18 @@ with ui.nav_panel("Data"):
                 plt.title('{} NYPD Response Tot:{}'.format(input.ticker(),Total))
                 plt.xlabel('')
                 return fig
+            
+            @render.plot
+            def pieplot6():
+                df_repeat= f_df().query('MinutesElapsed==MaxR_Mins and RepeatBin!="1"')
+                p2=['resolution','index_']
+                gf=df_repeat[p2].groupby(['resolution']).sum().reset_index()
+                gf.columns=['resolution','Count']
+                Total = df_repeat.index_.sum() 
+                fig=plt.pie(gf.Count, labels=gf.resolution, autopct='%1.0f%%')
+                plt.title('{} Call-Density >1 Tot:{}'.format(input.ticker(),Total))
+                plt.xlabel('')
+                return fig
 
         with ui.nav_panel("Summary Table"):
             @render.text
@@ -184,7 +219,7 @@ with ui.nav_panel("Data"):
             @render.data_frame
             def Summary_df():
                 # Predefined resolution categories and elapsed minute bins
-                all_resolutions = ["Action", "Miss", "No-Action", "Summon"]  # Add all possible resolution values here
+                all_resolutions = ["Action", "Late", "No-Action", "Summon"]  # Add all possible resolution values here
                 elapsed_bins = ["min0->5", "min5->30", "min30->60", "min60->360", "min360+"]  # Define all bins
 
                 # Step 1: Aggregate Total, Median, and Mean
@@ -260,7 +295,112 @@ with ui.nav_panel("Data"):
                     styles=df_styles,
                     width='100%',
                     )
-            
+
+        with ui.nav_panel("Call-Density Stats"):
+            @render.text
+            def header_text8():
+                return "{} NYPD Call-Density Stats from {} to {}".format(
+                    input.ticker(), input.date_range()[0], input.date_range()[1]
+                )
+
+            @render.data_frame
+            def repeat():
+                dfc_unique= f_df().query('MinutesElapsed==MaxR_Mins')
+                all_repeat = ["1", "2", "3", "4","5+"]  # Add all possible resolution values here
+                resolution_bins = ["Action", "Late", "No-Action", "Summon"]  # Define all bins
+                elapsed_bins = ["min0->5", "min5->30", "min30->60", "min60->360", "min360+"]  # Define all bins
+                
+                # Step 1: Aggregate Total, Median, and Mean
+                cols_total = ["RepeatBin", "index_"]
+                cols_elapsed = ["RepeatBin", "MinutesElapsed"]
+                
+                # Total count with predefined categories
+                df_total = dfc_unique[cols_total].groupby("RepeatBin", observed=False).sum()
+                df_total = df_total.reindex(all_repeat, fill_value=0).reset_index()
+                df_total.columns = ["RepeatBin", "Total"]
+                
+                # Median of MinutesElapsed
+                df_median = dfc_unique[cols_elapsed].groupby("RepeatBin", observed=False).median()
+                df_median = df_median.reindex(all_repeat, fill_value=0).reset_index()
+                df_median = df_median.round(2)
+                df_median.columns = ["RepeatBin", "Median_Minutes"]
+                
+                # Mean of MinutesElapsed
+                df_mean = dfc_unique[cols_elapsed].groupby("RepeatBin", observed=False).mean()
+                df_mean = df_mean.reindex(all_repeat, fill_value=0).reset_index()
+                df_mean = df_mean.round(2)
+                df_mean.columns = ["RepeatBin", "Mean_Minutes"]
+                
+                # Merge Total, Median, and Mean
+                merged_df = pd.merge(df_total, df_median, on="RepeatBin", how="left")
+                merged_df = pd.merge(merged_df, df_mean, on="RepeatBin", how="left")
+                
+                
+                # Step 2: Create Binned Count with all bins included
+                bins_cols = ["RepeatBin", "resolution", "index_"]
+                
+                # Group and pivot with predefined bins
+                df_bins = dfc_unique[bins_cols].groupby(["RepeatBin", "resolution"]).sum().reset_index()
+                df_bins["resolution"] = pd.Categorical(df_bins["resolution"], categories=resolution_bins, ordered=True)
+                df_bins = df_bins.pivot_table(index="RepeatBin", columns="resolution", values="index_", fill_value=0).reset_index()
+                
+                # Ensure all bins are included
+                df_bins = df_bins.reindex(columns=["RepeatBin"] + resolution_bins, fill_value=0)
+                
+                # Merge binned data with aggregated data
+                result_df = pd.merge(merged_df, df_bins, on="RepeatBin", how="left")
+                result_df.columns = ["RepeatBin", "Total", "Median_Mins", "Mean_Mins"] + resolution_bins
+                
+                # Step 2: Create Binned Count with all bins included
+                bins_cols = ["RepeatBin", "ElapsedMinuteBin", "index_"]
+                
+                # Group and pivot with predefined bins
+                df_bins = dfc_unique[bins_cols].groupby(["RepeatBin","ElapsedMinuteBin"]).sum().reset_index()
+                df_bins["ElapsedMinuteBin"] = pd.Categorical(df_bins["ElapsedMinuteBin"], categories=elapsed_bins, ordered=True)
+                df_bins = df_bins.pivot_table(index="RepeatBin", columns="ElapsedMinuteBin", values="index_", fill_value=0).reset_index()
+                
+                # Ensure all bins are included
+                df_bins = df_bins.reindex(columns=["RepeatBin"] + elapsed_bins, fill_value=0)
+                
+                # Merge binned data with aggregated data
+                result1_df = pd.merge(result_df, df_bins, on="RepeatBin", how="left")
+                result1_df.columns = ["Call-Density", "Total", "Median_Mins", "Mean_Mins","Action","Late","No-Action","Summon"] + elapsed_bins
+                
+                # Step 3: Add Citywide Totals
+                city_data = [
+                    "All",
+                    result1_df["Total"].sum(),
+                    round(dfc_unique["MinutesElapsed"].median(), 3),
+                    round(dfc_unique["MinutesElapsed"].mean(), 3),
+                    *[result1_df[bin].sum() for bin in resolution_bins],
+                    *[result1_df[bin].sum() for bin in elapsed_bins],
+                ]
+                
+                citywide_df = pd.DataFrame([city_data], columns=result1_df.columns)
+                
+                # Combine aggregated data with citywide totals
+                final_df = pd.concat([result1_df, citywide_df], ignore_index=True)
+
+                
+                # Step 4: Calculate percentages for binned columns
+                final_bin=[ "Late", "No-Action","Action", "Summon","min0->5", "min5->30", "min30->60", "min60->360", "min360+"]
+                
+                for col in final_bin:
+                    final_df[col] = (
+                        final_df[col]
+                        .div(final_df["Total"])
+                        .fillna(0)
+                        .mul(100)
+                        .apply(lambda x: f"{x:.1f}%")
+                    )
+                # Style table with consistent dimensions
+                return render.DataTable(
+                    final_df,
+                    height='100%',
+                    styles=df_styles,
+                    width='100%',
+                    )
+
         with ui.nav_panel("History"):
             @render.plot
             def lineplot1():
@@ -302,7 +442,8 @@ with ui.nav_panel("Interactive Maps"):
         with ui.nav_panel("City InAction Rate"):
             ui.markdown(
                 '''
-                <div class="flourish-embed flourish-map" data-src="visualisation/20876100"><script src="https://public.flourish.studio/resources/embed.js"></script><noscript><img src="https://public.flourish.studio/visualisation/20876100/thumbnail" width="100%" alt="map visualization" /></noscript></div>
+                "InAction" combines Late & No-Action resolution
+                <div class="flourish-embed flourish-map" data-src="visualisation/21004828"><script src="https://public.flourish.studio/resources/embed.js"></script><noscript><img src="https://public.flourish.studio/visualisation/21004828/thumbnail" width="100%" alt="map visualization" /></noscript></div>
                 '''
                 ) 
 
@@ -310,7 +451,7 @@ with ui.nav_panel("Interactive Maps"):
         with ui.nav_panel("City Response Time"):
             ui.markdown(
                 '''
-                <div class="flourish-embed flourish-map" data-src="visualisation/20781545"><script src="https://public.flourish.studio/resources/embed.js"></script><noscript><img src="https://public.flourish.studio/visualisation/20781545/thumbnail" width="100%" alt="map visualization" /></noscript></div>
+                <div class="flourish-embed flourish-map" data-src="visualisation/21004772"><script src="https://public.flourish.studio/resources/embed.js"></script><noscript><img src="https://public.flourish.studio/visualisation/21004772/thumbnail" width="100%" alt="map visualization" /></noscript></div>
                 '''
                 ) 
         with ui.nav_panel("Local HotSpot (Desktop)"):
@@ -348,7 +489,7 @@ with ui.nav_panel("Interactive Maps"):
                 group_columns = [
                     'incident_address', 'UAdd', 'cboard', 'longitude', 'latitude', 'index_',
                     "min0->5", "min5->30", "min30->60", "min60->360", "min360+",
-                    'Miss', 'No-Action', 'Action', 'Summon'
+                    'Late', 'No-Action', 'Action', 'Summon'
                 ]
                 df_grouped = f_df()[group_columns].groupby(
                     ['incident_address', 'UAdd', 'cboard', 'longitude', 'latitude']
@@ -394,7 +535,7 @@ with ui.nav_panel("Interactive Maps"):
                             f"Min30->60: {row['min30->60']}<br>"
                             f"Min60->360: {row['min60->360']}<br>"
                             f"Min360+: {row['min360+']}<br>"
-                            f"Miss#: {row['Miss']}<br>"
+                            f"Late#: {row['Late']}<br>"
                             f"No-Action#: {row['No-Action']}<br>"
                             f"Action#: {row['Action']}<br>"
                             f"Summon#: {row['Summon']}"
@@ -403,7 +544,7 @@ with ui.nav_panel("Interactive Maps"):
                             location=(row["latitude"], row["longitude"]),
                             radius=row['index_'] / 15 + 3,
                             color=color,
-                            popup=popup_text,
+                            popup = folium.Popup(popup_text, max_width=300),
                             fill=True
                         ).add_to(nyc_map)
 
@@ -451,7 +592,7 @@ with ui.nav_panel("Interactive Maps"):
                 group_columns = [
                     'incident_address', 'UAdd', 'cboard', 'longitude', 'latitude', 'index_', 
                     "min0->5", "min5->30", "min30->60", "min60->360", "min360+", 
-                    'Miss', 'No-Action', 'Action', 'Summon'
+                    'Late', 'No-Action', 'Action', 'Summon'
                 ]
                 df_grouped = f_df()[group_columns].groupby(
                     ['incident_address', 'UAdd', 'cboard', 'longitude', 'latitude']
@@ -490,7 +631,7 @@ with ui.nav_panel("Interactive Maps"):
                             f"Total: {row['index_']}<br>"
                             f"MedianMin: {row['MedianResponse_Minutes']}<br>"
                             f"MeanMin: {row['MeanResponse_Minutes']}<br>"
-                            f"Miss#: {row['Miss']}<br>"
+                            f"Late#: {row['Late']}<br>"
                             f"No-Action#: {row['No-Action']}<br>"
                             f"Action#: {row['Action']}<br>"
                             f"Summon#: {row['Summon']}"
@@ -499,7 +640,7 @@ with ui.nav_panel("Interactive Maps"):
                             location=(row["latitude"], row["longitude"]),
                             radius=row['index_'] / 15 + 3,
                             color=color,
-                            popup=popup_text,
+                            popup = folium.Popup(popup_text, max_width=300),
                             fill=True
                         ).add_to(nyc_map)
 
@@ -516,7 +657,7 @@ with ui.nav_menu("Links"):
 
 
 
-with ui.nav_panel("About"):
+with ui.nav_panel("About Me"):
     ui.markdown(
         '''
             ### Purpose
