@@ -7,7 +7,7 @@ import shinywidgets
 from shiny import reactive
 from shiny.express import input, render, ui, session
 import json
-import branca
+#import branca
 #import geopandas
 import plotly.express as px
 from shinywidgets import render_plotly, render_widget
@@ -32,9 +32,9 @@ df.dateTime = df.dateTime.dt.date
 df.index_=df.index_.astype(int)
 df.MinutesElapsed=df.MinutesElapsed.astype(float)
 
-board_options = ["All"] + sorted(df['cboard_name'].dropna().astype(str).unique())
-
-
+board_options = ["All"] + sorted(df['cboard_expand'].dropna().astype(str).unique())
+ 
+update_date= "2024-12-31"
 
 #Test CSS
 df_styles = [
@@ -110,6 +110,9 @@ df_styles1 = [
             "text-align": "right",
         },
     },
+    {"targets": [0], "width": "300px"},  # First column (Date)
+    {"targets": [1],"width": "300px"},  # First column (Date)
+    {"targets": [2], "width": "400px"},  # Third column (Address)
  #   {
  #       "location": "body",
  #       "cols": [5],  # Target the 6th column (index 5)
@@ -117,16 +120,23 @@ df_styles1 = [
  #           "width": "300px",  # Adjust the width as needed
  #           "white-space": "normal",  # Allow text wrapping if necessary
  #       },
- #   },
+ #   }, 
 ]
 
 #4. Create Primary Reactive Table
 @reactive.calc
 def f_df():
-    mf = df[(df["dateTime"] >= input.date_range()[0]) & (df["dateTime"] <= input.date_range()[1])]
+    mf = df[(df["dateTime"] >= input.date_range()[0]) & (df["dateTime"] <= input.date_range()[1])].sort_values(by='dateTime',ascending=False)
     if input.ticker() != "All":
-        mf = mf[mf["cboard_name"] == input.ticker()]
+        mf = mf[mf["cboard_expand"] == input.ticker()]
     return mf
+
+@reactive.Calc
+def cb():
+    if input.ticker() != "All":
+        return input.ticker().split(':')[0]
+    else:
+        return "All"
 
 
 # Display
@@ -139,6 +149,18 @@ with ui.sidebar():
     ui.tags.script(
     """
     document.addEventListener('DOMContentLoaded', function() {
+        // Collapse navbar after menu item is clicked
+        const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
+        const navbarCollapse = document.querySelector('.navbar-collapse');
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                if (navbarCollapse.classList.contains('show')) {
+                    navbarCollapse.classList.remove('show');
+                }
+            });
+        });
+
         const inputs = document.querySelectorAll('input[type="number"], input[type="text"]');
         inputs.forEach(input => {
             input.addEventListener('focus', function(e) {
@@ -149,9 +171,10 @@ with ui.sidebar():
         });
     });
     """)
-    ui.input_date_range("date_range", "Select date range", start="2023-01-01",min="2023-01-01")
+    ui.input_date_range("date_range", "Select date range", start="2023-01-01",min="2021-01-01", end=update_date, max=update_date)
     ui.input_select("ticker", "Select community board", choices=board_options, selected="All")
     ui.input_slider("obs", "Select Min. Entries for Map Display", min=1, max=8, value=3) 
+
 
 
 #3. Input Options 
@@ -159,11 +182,18 @@ with ui.sidebar():
 with ui.nav_panel("Welcome"):
     ui.markdown(
         '''
+            ### Updated 1/1/25
+            * For mobile: select parameters BELOW and access analysis on menu 
             ### Data
             * Each record is a reported 311 request. [Data Source]("https://data.cityofnewyork.us/Social-Services/311-Service-Requests-from-2010-to-Present/erm2-nwe9/about_data/")
-            * NYPD resolution is binned to 4 categories [table below].
-            * Call-Density is the frequency of calls for NYPD response
+            * NYPD resolution is binned to 4 categories [SEE table below].
+            * NYPD response time is difference between 311 opening and 311 closing time.
+            * Call-Density is the frequency of calls for NYPD to respond to a request.
             * SELECT parameters at bottom (or left), and analysis on menu.
+            ### Purpose
+            * Investigative reporting provided evidence of NYPD [non-responsiveness](https://nyc.streetsblog.org/2024/10/29/study-exposes-nypds-systemic-failure-to-enforce-safety-related-parking-violations) and [malpractice](https://nyc.streetsblog.org/2023/04/06/nypd-tickets-fewer-than-2-of-blocked-bike-lane-complaints-analysis). 
+            * This is community TOOL to monitor and measure progress of holding NYPD accountable.
+            * To learn more, see [Exploratory Report](https://nbviewer.org/github/sustainabu/OpenDataNYC/blob/main/311_BlockedBikeLane/BlockBikeLane%20Report_01_01_25.ipynb)
         '''
         )
     
@@ -171,19 +201,10 @@ with ui.nav_panel("Welcome"):
     def image():
         img = {"src": app_dir / "Table1.png", "width": "400px"}  
         return img    
-           
-    ui.markdown(
-        '''
-            ### Purpose
-            * Investigative reporting provided evidence of NYPD [non-responsiveness](https://nyc.streetsblog.org/2024/10/29/study-exposes-nypds-systemic-failure-to-enforce-safety-related-parking-violations) and [malpractice](https://nyc.streetsblog.org/2023/04/06/nypd-tickets-fewer-than-2-of-blocked-bike-lane-complaints-analysis). 
-            * This is community TOOL to monitor and measure progress of holding NYPD accountable.
-            * To learn more, see [Exploratory Report](https://nbviewer.org/github/sustainabu/OpenDataNYC/blob/996df4443b7c624ddf1a349dfdac4be2fe196e0c/311_BlockedBikeLane/BlockBikeLane%20Report_Update.ipynb)
-        '''
-        )
 
 with ui.nav_panel("Data Analysis"):
     ui.include_css(app_dir / "styles.css")
-    ui.markdown('''[Updated: 12/17/24]; For mobile: select parameters BELOW and access MAPS on menu''')
+    #ui.markdown('''[Updated: 12/17/24]; For mobile: select parameters BELOW and access MAPS on menu''')
     with ui.navset_card_underline():
         with ui.nav_panel("Resolution Distribution"):
             @render.plot
@@ -193,7 +214,7 @@ with ui.nav_panel("Data Analysis"):
                 gf.columns=['resolution','Count']
                 Total = f_df().index_.sum() 
                 fig=plt.pie(gf.Count, labels=gf.resolution, autopct='%1.0f%%')
-                plt.title('{} NYPD Response Tot:{}'.format(input.ticker(),Total))
+                plt.title('{} NYPD Response Tot:{}'.format(cb(),Total))
                 plt.xlabel('')
                 return fig
             
@@ -205,7 +226,7 @@ with ui.nav_panel("Data Analysis"):
                 gf.columns=['resolution','Count']
                 Total = df_repeat.index_.sum() 
                 fig=plt.pie(gf.Count, labels=gf.resolution, autopct='%1.0f%%')
-                plt.title('{} Call-Density >1 Tot:{}'.format(input.ticker(),Total))
+                plt.title('{} Call-Density >1 Tot:{}'.format(cb(),Total))
                 plt.xlabel('')
                 return fig
 
@@ -213,7 +234,7 @@ with ui.nav_panel("Data Analysis"):
             @render.text
             def header_text():
                 return "{} NYPD Resolution & Reponse Times from {} to {}".format(
-                    input.ticker(), input.date_range()[0], input.date_range()[1]
+                    cb(), input.date_range()[0], input.date_range()[1]
                 )
 
             @render.data_frame
@@ -268,8 +289,8 @@ with ui.nav_panel("Data Analysis"):
                 city_data = [
                     "All_resolutions",
                     result_df["Total"].sum(),
-                    round(f_df()["MinutesElapsed"].median(), 3),
-                    round(f_df()["MinutesElapsed"].mean(), 3),
+                    round(f_df()["MinutesElapsed"].median(), 2),
+                    round(f_df()["MinutesElapsed"].mean(), 2),
                     *[result_df[bin].sum() for bin in elapsed_bins],
                 ]
 
@@ -300,7 +321,7 @@ with ui.nav_panel("Data Analysis"):
             @render.text
             def header_text8():
                 return "{} NYPD Call-Density Stats from {} to {}".format(
-                    input.ticker(), input.date_range()[0], input.date_range()[1]
+                    cb(), input.date_range()[0], input.date_range()[1]
                 )
 
             @render.data_frame
@@ -370,8 +391,8 @@ with ui.nav_panel("Data Analysis"):
                 city_data = [
                     "All",
                     result1_df["Total"].sum(),
-                    round(dfc_unique["MinutesElapsed"].median(), 3),
-                    round(dfc_unique["MinutesElapsed"].mean(), 3),
+                    round(dfc_unique["MinutesElapsed"].median(), 2),
+                    round(dfc_unique["MinutesElapsed"].mean(), 2),
                     *[result1_df[bin].sum() for bin in resolution_bins],
                     *[result1_df[bin].sum() for bin in elapsed_bins],
                 ]
@@ -394,8 +415,9 @@ with ui.nav_panel("Data Analysis"):
                         .apply(lambda x: f"{x:.1f}%")
                     )
                 # Style table with consistent dimensions
+                colss=["Call-Density",'Total','Median_Mins',"Mean_Mins", "Late", "No-Action","Action", "Summon","min0->5", "min5->30", "min30->60", "min60->360", "min360+"]
                 return render.DataTable(
-                    final_df,
+                    final_df[colss],
                     height='100%',
                     styles=df_styles,
                     width='100%',
@@ -417,7 +439,7 @@ with ui.nav_panel("Data Analysis"):
                     )   
                 plt.xlabel('WeekBin (0=beginning of year)')
                 plt.ylabel('')
-                plt.title("{} 311 Requests by Week".format(input.ticker()))
+                plt.title("{} 311 Requests by Week".format(cb()))
                 plt.legend(title='Year')
                 figure = plt.gcf()
                 return figure
@@ -426,15 +448,15 @@ with ui.nav_panel("Data Analysis"):
             @render.text
             def header_text1():
                 return "{} Blocked Bike Lane Service Request from {} to {}".format(
-                    input.ticker(), input.date_range()[0], input.date_range()[1]
+                    cb(), input.date_range()[0], input.date_range()[1]
                 )
             @render.data_frame
             def B_df():
-                p=['date','Time','incident_address','MinutesElapsed','resolution']
+                p=['date','Time','incident_address','resolution','MinutesElapsed']
                 B= f_df()[p]
-                B.columns= ['Date','Time','Address','Response_Mins','Resolution']
+                B.columns= ['Date','Time','Address','Resolution','Response_Mins']
                 return render.DataTable(
-                    B.head(25),styles=df_styles1, width='100%'
+                    B.head(25),styles=df_styles1, width='100%',height='100%'
                 )
             
 with ui.nav_panel("Interactive Maps"):
@@ -582,7 +604,7 @@ with ui.nav_panel("Interactive Maps"):
                     zoom = 11.25
                     map_location = [40.7128, -74.0060]  # Default NYC location
                 else:
-                    zoom = 13
+                    zoom = 12.5
                     map_location = [latitude_mid, longitude_mid]
 
                 # Initialize folium map
@@ -650,7 +672,7 @@ with ui.nav_panel("Interactive Maps"):
         
 with ui.nav_menu("Links"):
     with ui.nav_control():
-        ui.a("Exploratory Report", href="https://nbviewer.org/github/sustainabu/OpenDataNYC/blob/996df4443b7c624ddf1a349dfdac4be2fe196e0c/311_BlockedBikeLane/BlockBikeLane%20Report_Update.ipynb", target="_blank")
+        ui.a("Exploratory Report", href="https://nbviewer.org/github/sustainabu/OpenDataNYC/blob/main/311_BlockedBikeLane/BlockBikeLane%20Report_01_01_25.ipynb", target="_blank")
         ui.a("AI Traffic Study", href="https://nyc.streetsblog.org/2024/10/29/study-exposes-nypds-systemic-failure-to-enforce-safety-related-parking-violations", target="_blank")
         ui.a("311 Service Data", href="https://data.cityofnewyork.us/Social-Services/311-Service-Requests-from-2010-to-Present/erm2-nwe9/about_data/", target="_blank")
         ui.a("Github", href="https://github.com/sustainabu/OpenDataNYC/tree/main/311_BlockedBikeLane", target="_blank")
@@ -660,25 +682,15 @@ with ui.nav_menu("Links"):
 with ui.nav_panel("About Me"):
     ui.markdown(
         '''
-            ### Purpose
-            * Obstructed bike lanes restricts the use for cyclists, and places them in danger. Greater and timely enforcement deters future violations
-            * A diagnosis tool to determine NYPD responses more critically, including their response time 
-            * A community dashboard for citizens to CONTINUE to monitor and measure progress of holding NYPD accountable
-            ### ABOUT the Dataset
-            * Every single record is a 311 request. NYPD is mandated to respond to request. However, there is no external validation that NYPD took action for some cases.
-            * The **police response time** is the difference between the opening & closing of the service request. Pay attention to requests ending immediately, and prolonged response.
-            * Police resolutions were classified into four categories: Miss, Action, No-Action, and Summons. 
-            * Around 75% of service requests led to 'No-Action" or NYPD "Missing" the violators.
-            * Learn More in the [data report](https://nbviewer.org/github/sustainabu/OpenDataNYC/blob/996df4443b7c624ddf1a349dfdac4be2fe196e0c/311_BlockedBikeLane/BlockBikeLane%20Report_Update.ipynb)
-            ### Next Steps
-            * The anaylsis can be improved if there is geo-validation to police precinct
-            * I'm interested to explore using crowd-source validation as means to verify and hold NYPD accountable. If your a developer, let's chat
-            * Partner with local community organizations for an intentional campaign to improve biking violation enforcement.
             ### ABOUT Me
-            * My name is Abu Nayeem. I'm a community advocate and Jamaica, Queens resident
-            * I'm trained as an economist (MS Economics in UC Berkeley) and self-learned programmer
+            * My name is Abu Nayeem. I'm a community advocate and Jamaica, Queens resident.
+            * I'm trained as an economist (MS Economics in UC Berkeley) and self-learned programmer.
             * For other data projects, check out my [Github](https://github.com/sustainabu/OpenDataNYC)
             * I'm currently looking for job opportunities feel free to reach out to me (Abu: anayeem1@gmail.com)
+            ### Next Steps
+            * I'm interested to explore using crowd-source validation as means to verify and hold NYPD accountable. If your a developer, let's chat
+            * Partner with local community organizations for an intentional campaign to improve biking violation enforcement.
+
         '''
         )
 
