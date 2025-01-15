@@ -709,8 +709,6 @@ def history_graph(start_date, end_date, value, choice):
 )
 def folium_map(start_date, end_date, value, slide):
     # Select only unique values
-    df.dropna(subset=['precinct'], inplace=True)
-    df.dropna(subset=['longitude'], inplace=True)
     dfc_unique= df.query('MinutesElapsed==MaxR_Mins')
 
     # Filter by board selection
