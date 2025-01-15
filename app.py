@@ -148,9 +148,7 @@ def render_content(tab):
                 },
                 value=3,
             ),
-            html.Div([
-                html.Div(id='folium')
-            ]),
+            html.Iframe(id='folium-map', width='100%', height='600px')
         ], style={'width': '80%', 'margin': 'auto'})
 
     elif tab == 'tab-2':
@@ -700,7 +698,7 @@ def history_graph(start_date, end_date, value, choice):
 
 #Callback for Folium Map
 @callback(
-    Output("folium", "srcDoc"),
+    Output("folium-map", "srcDoc"),
     [Input('start-date', 'date'), 
      Input('end-date', 'date'), 
      Input("dropdown", "value"),
@@ -712,7 +710,7 @@ def folium_map(start_date, end_date, value, slide):
     dfc_unique= df.query('MinutesElapsed==MaxR_Mins')
 
     # Filter by board selection
-    filtered_df = dfc_unique[dfc_unique["cboard_expand"] == value] if value != "All" else df
+    filtered_df = dfc_unique[dfc_unique["cboard_expand"] == value] if value != "All" else dfc_unique
 
     # Filter by date range
     filtered_df = filtered_df[
@@ -809,7 +807,7 @@ def folium_map(start_date, end_date, value, slide):
                             color="#FFB52E",
                             popup=folium.Popup(popup_text, max_width=300),
                             fill=True).add_to(nyc_map)
-    # Greater than 25 count
+    
     FC=F.query('Inaction_rank=="High"')
     for index, row in FC.iterrows(): 
         popup_text = "Address: {}<br> Total: {}<br> Inaction Rate: {}<br> Late#: {}<br> No-Action#: {}<br> Action#: {}<br> Summon#: {}"
@@ -818,13 +816,10 @@ def folium_map(start_date, end_date, value, slide):
                             radius=row['total'] / 15 + 3,
                             color="#E32227",
                             popup=folium.Popup(popup_text, max_width=300),
-                            fill=True).add_to(nyc_map)       
-    return html.Iframe(
-        srcDoc=nyc_map._repr_html_(),
-        width='100%',
-        height='600px',
-        style={'border': 'none'}
-    )
+                            fill=True).add_to(nyc_map)  
+    
+
+    return nyc_map._repr_html_()
 
 # Run the app
 if __name__ == "__main__":
