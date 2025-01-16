@@ -1,10 +1,11 @@
-from dash import Dash, html, dcc, callback, Output, Input
+from dash import Dash, html, dcc, callback, Output, Input, dash_table, State
 from datetime import date
 import plotly.express as px
 import pandas as pd
 import plotly.graph_objects as go
 import matplotlib.pyplot as plt
 import folium
+import io
 from io import BytesIO
 import base64
 
@@ -44,80 +45,90 @@ app.layout = html.Div([
 def render_content(tab):
     if tab == 'tab-1':
         return html.Div([
-            dcc.Markdown("Each record is a 311 request for Blocked Bike Lane Violation. The dashboard displays NYPD responses, response-time, and call-density."),
-            html.Div([
-                dcc.Markdown("### Select Parameters")
-            ], style={'padding': 10}),
+            # Header Markdown
+            dcc.Markdown(
+                f"Each record is a 311 Service Request for 'Blocked Bike Lane' Violation. "
+                f"This dashboard explores NYPD response. **Last Updated: {update_date}**"
+            ),
+            dcc.Markdown("## Select Parameters", style={'textAlign': 'center'}),
 
-            # Start and End Date Pickers
+            # Date Pickers with horizontal space
             html.Div([
                 html.Div([
-                    dcc.Markdown('''
-                        **Start Date**
-                        '''
-                    ),
+                    dcc.Markdown("**Start Date**"),
                     dcc.DatePickerSingle(
                         id='start-date',
                         min_date_allowed=date(2021, 1, 1),
                         max_date_allowed=update_date,
-                        initial_visible_month=date(2023, 1, 1),
                         date=date(2023, 1, 1),
                         placeholder='Select Start Date'
                     ),
-                ], style={'margin-right': '20px'}),
+                ], style={'marginRight': '20px'}),  # Space between date pickers
 
                 html.Div([
-                    html.H4("End Date"),
+                    dcc.Markdown("**End Date**"),
                     dcc.DatePickerSingle(
                         id='end-date',
                         min_date_allowed=date(2021, 1, 1),
                         max_date_allowed=update_date,
-                        initial_visible_month=update_date,
                         date=update_date,
                         placeholder='Select End Date'
                     ),
-                ], style={'margin-right': '20px'}),
-            ], style={'display': 'flex', 'flex-direction': 'row', 'margin-bottom': '20px'}),
+                ]),
+            ], style={'display': 'flex', 'flexDirection': 'row', 'marginBottom': '20px'}),
 
             # Dropdown for Board Selection
             html.Div([
                 html.H4("Select Community Board"),
-                dcc.Dropdown(board_options, value="All", id="dropdown", style={'margin-bottom': 20})
+                dcc.Dropdown(board_options, value="All", id="dropdown", style={'marginBottom': 20}),
             ]),
+
+            # Additional Section Title
+            html.Div([
+                dcc.Markdown("### How does NYPD respond?", style={'textAlign': 'center'}),
+            ], style={'padding': 10}),
             # Plot
             dcc.Graph(id="pie"),
+
             # Response Time Bar
+            html.Div([
+                dcc.Markdown("### What is NYPD Response Time?", style={'textAlign': 'center'}),
+            ], style={'padding': 10}),
+            dcc.Markdown("**Note:** Response times less than 5 minutes are likely fraud by NYPD supported by investigative studies"),
             html.Div([
                 dcc.RadioItems(
                     id="radio1",
                     options=[
-                        {"label": "Statistics", "value": "stat"},
-                        {"label": "Distribution", "value": "dist"},
+                        {"label": "Summary", "value": "stat"},
+                        {"label": "Time Distribution", "value": "dist"},
                     ],
-                    labelClassName="radio__labels",
-                    inputClassName="radio__input",
                     value="stat",
-                    className="radio__group",
+                    inline=True,
                 ),
                 dcc.Graph(id="resolution_bar", config={'displayModeBar': False})
             ]),
             # Density Bar
             html.Div([
+                dcc.Markdown("### Are NYPD responsive if multiple requests were made (i.e. call-density)?", style={'textAlign': 'center'}),
+            ], style={'padding': 10}),
+            html.Div([
                 dcc.RadioItems(
                     id="radio2",
                     options=[
-                        {"label": "Distribution", "value": "dist"},
+                        {"label": "Summary", "value": "dist"},
                         {"label": "Resolution", "value": "resolution"},
                         {"label": "Response Time", "value": "time"},
                     ],
-                    labelClassName="radio__labels",
-                    inputClassName="radio__input",
                     value="dist",
-                    className="radio__group",
+                    inline=True,
                 ),
                 dcc.Graph(id="density_bar", config={'displayModeBar': False})
             ]),
             # History Graph
+            html.Div([
+                dcc.Markdown("### What are the trends?", style={'textAlign': 'center'}),
+            ], style={'padding': 10}),
+            dcc.Markdown("**Note: (*) symbol** indicate adjustment for double-counting"),
             html.Div([
                 dcc.RadioItems(
                     id="radio3",
@@ -125,30 +136,110 @@ def render_content(tab):
                         {"label": "Requests", "value": "request"},
                         {"label": "InAction-Rate*", "value": "inaction"},
                     ],
-                    labelClassName="radio__labels",
-                    inputClassName="radio__input",
                     value="request",
-                    className="radio__group",
+                    inline=True,
                 ),
                 dcc.Graph(id="history", config={'displayModeBar': False})
             ]),
-            # Density Bar
-            html.Label("Select minimum map entries"),
+
+            #Interactive Map
+            html.Div([
+                dcc.Markdown("### Where are the requests being made? (Interactive!)", style={'textAlign': 'center'}),
+            ], style={'padding': 10}),
+            # Slider
+            html.H4("Select minimum count to display"),
             dcc.Slider(
                 id="slider",
                 min=1,
                 max=10,
                 step=1,
                 marks={
-                    1: "1",
-                    3: "3",
-                    5: "5",
-                    7: "7",
-                    10: "10",
+                    1: "1",2: "2",3: "3",4: "4",5: "5",
+                    6: "6",7: "7",8: "8",9: "9",10: "10",
                 },
                 value=3,
             ),
-            html.Iframe(id='folium-map', width='100%', height='600px')
+            html.Div([
+                dcc.RadioItems(
+                    id="radio4",
+                    options=[
+                        {"label": "InAction-Rate*", "value": "inaction"},
+                        {"label": "Response Time*", "value": "time"},
+                    ],
+                    value="inaction",
+                    inline=True,
+                ),
+                html.Div([
+                    html.Button("Toggle Legend", id="legend-button", style={'marginTop': '10px'}),
+                    html.Div(
+                        id="legend-info",
+                        style={
+                            'display': 'none',  # Hidden by default
+                            'backgroundColor': 'white',
+                            'border': '1px solid black',
+                            'padding': '10px',
+                            'borderRadius': '5px',
+                            'width': '300px',
+                            'margin': '10px auto',
+                            'textAlign': 'left'
+                        }
+                    )
+                ], style={'textAlign': 'center'}),
+                html.Iframe(id='folium-map', width='100%', height='600px')
+            ]),
+            html.Div([
+                dcc.Markdown("### Recent 311 Blocked Bike Lane Service Requests", style={'textAlign': 'center'}),
+            ], style={'padding': 10}),
+
+            # Data Table
+            dash_table.DataTable(
+                id="recent-table",
+                columns=[
+                    {"name": i, "id": i, "deletable": False, "selectable": True} for i in 
+                    ['Date', 'Time', 'Address', 'Precinct', 'Resolution', 'Response_Mins']
+                ],
+                style_table={
+                    'overflowX': 'auto', 
+                    'maxWidth': '100%',
+                },
+                style_header={
+                    'backgroundColor': '#B0E0E6',
+                    'fontWeight': 'bold',
+                    'border': '1px solid black',
+                },
+                style_data={
+                    'border': '1px solid black',
+                    'whiteSpace': 'normal',
+                    'height': 'auto',  # Allow row wrapping for long text
+                },
+                style_data_conditional=[
+                    {'if': {'filter_query': '{Resolution} = "Late"'}, 'backgroundColor': '#ffb5c0'},
+                    {'if': {'filter_query': '{Resolution} = "Action"'}, 'backgroundColor': '#D5F5E3'},
+                    {'if': {'filter_query': '{Resolution} = "No-Action"'}, 'backgroundColor': '#ffdbbb'},
+                    {'if': {'filter_query': '{Resolution} = "Summon"'}, 'backgroundColor': '#ADD8E6'}
+                ],
+                style_cell={
+                    'textAlign': 'left',
+                    'padding': '5px',
+                    'minWidth': '80px',
+                    'maxWidth': '200px',
+                    'overflow': 'hidden',
+                    'textOverflow': 'ellipsis',
+                },
+                page_size=10,
+                sort_action='native',
+                fixed_rows={'headers': False},  # Disable fixed headers for mobile scrolling
+            ),
+            
+            # Download Button
+            html.A(
+                "Download CSV",
+                id="download-link",
+                download="filtered_data.csv",
+                href="",
+                target="_blank",
+                style={'margin-bottom': 'auto', 'margin-right': '0', 'float': 'right'}
+            )
         ], style={'width': '80%', 'margin': 'auto'})
 
     elif tab == 'tab-2':
@@ -208,7 +299,20 @@ def update_graph(start_date, end_date, value):
         grouped_data,
         names="resolution",
         values="Count",
-        title=f"Total 311 NYPD Service Resolutions for {valueT()}: {filtered_df['index_'].sum()}"
+        title=f"Total 311 NYPD Service Resolutions for {valueT()}: {filtered_df['index_'].sum()} Requests"
+    )
+
+    # Adjust the layout for the legend
+    fig.update_layout(
+        legend=dict(
+            orientation='h',  # Horizontal legend
+            yanchor='top',
+            y=-0.15,  # Position below the chart
+            xanchor='center',
+            x=0.5  # Centered horizontally
+        ),
+        title_x=0.5,
+        margin=dict(t=50, b=100)  # Adjust margins to make space for the legend
     )
 
     return fig
@@ -314,9 +418,19 @@ def bar_graph(start_date, end_date, value, choice):
     go.Bar(name='Median', x=final_df['Police_resolution'], y=final_df['Median_Mins']),
     go.Bar(name='Mean', x=final_df['Police_resolution'], y=final_df['Mean_Mins'])
     ])
-    fig1.update_layout(barmode='group',yaxis_title= 'Minutes',
-                      title=f"NYPD Resolution Response Time for {valueT()}"
-                      )
+
+    fig1.update_layout(
+        barmode='group',
+        title=f"NYPD Resolution Response Time (Minutes) for {valueT()}",
+        legend=dict(
+            orientation='h',  # Horizontal legend
+            yanchor='bottom',
+            y=-0.25,  # Position below the chart
+            xanchor='center',
+            x=0.5,  # Centered horizontally
+            traceorder='normal'
+        )
+    )
     
     ## horizontal graph
     fig2 = go.Figure()
@@ -376,7 +490,7 @@ def bar_graph(start_date, end_date, value, choice):
             x=0.5,  # Centered horizontally
             traceorder='normal'
         ),
-        margin = dict(l=10, r=10, t=10, b=10),
+        margin = dict(l=10, r=10, t=10, b=10)
     )
     
     #Select by Radio Button
@@ -436,9 +550,21 @@ def density_graph(start_date, end_date, value, choice):
         grouped_data,
         names="RepeatBin",
         values="Count",
-        title=f"Total Call-Density Breakdown for {valueT()}: {dfc_unique['index_'].sum()}"
+        title=f"Total Call-Density Breakdown for {valueT()}: {dfc_unique['index_'].sum()} Requests"
     )
 
+    # Adjust the layout for the legend
+    fig1.update_layout(
+        legend=dict(
+            orientation='h',  # Horizontal legend
+            yanchor='top',
+            y=-0.15,  # Position below the chart
+            xanchor='center',
+            x=0.5  # Centered horizontally
+        ),
+        title_x=0.5,
+        margin=dict(t=50, b=100)  # Adjust margins to make space for the legend
+    )
 
     # Step 2: Create Binned Count with all bins included
     bins_cols = ["RepeatBin", "resolution", "index_"]
@@ -545,7 +671,7 @@ def density_graph(start_date, end_date, value, choice):
             x=0.5,  # Centered horizontally
             traceorder='normal'
         ),
-        margin = dict(l=10, r=10, t=10, b=10),
+        margin = dict(l=10, r=10, t=10, b=10)
     )
 
     ## horizontal graph
@@ -669,8 +795,18 @@ def history_graph(start_date, end_date, value, choice):
                 name=str(year),
                 line=dict(dash=linestyle, color=custom_palette[year % len(custom_palette)])
             ))
+        title = f"311 Blocked Bike Lane Requests History for {valueT()} from {start_date} to {end_date}"
 
-        title = f"311 NYPD Service Requests History for {valueT()}"
+        # Create Plotly figure
+        figure = go.Figure(data=traces)
+        figure.update_layout(
+            title=title,
+            xaxis_title='WeekBin (0 = beginning of year)',
+            yaxis_title='',
+            legend_title='Year',
+            template='plotly_white'
+        ) 
+
     else:
         traces = []
         for year in df1['Year'].unique():
@@ -682,8 +818,7 @@ def history_graph(start_date, end_date, value, choice):
                 name=str(year),
                 line=dict(dash=linestyle, color=custom_palette[year % len(custom_palette)])
             ))
-
-        title = f"311 NYPD Inaction Rate History for {valueT()}"
+        title = f"311 NYPD InAction Rate History for {valueT()} from {start_date} to {end_date}"
 
     # Create Plotly figure
     figure = go.Figure(data=traces)
@@ -691,10 +826,20 @@ def history_graph(start_date, end_date, value, choice):
         title=title,
         xaxis_title='WeekBin (0 = beginning of year)',
         yaxis_title='',
-        legend_title='Year',
-        template='plotly_white'
+        template='plotly_white',
+        legend=dict(
+            orientation='h',  # Horizontal legend
+            yanchor='top',
+            y=-0.2,  # Position below the chart
+            xanchor='center',
+            x=0.5  # Center horizontally
+        ),
+        margin=dict(t=50, b=100)  # Adjust margins for space
     )
-    return figure 
+    return figure
+
+
+
 
 #Callback for Folium Map
 @callback(
@@ -702,10 +847,11 @@ def history_graph(start_date, end_date, value, choice):
     [Input('start-date', 'date'), 
      Input('end-date', 'date'), 
      Input("dropdown", "value"),
-     Input("slider", "value")
+     Input("slider", "value"),
+     Input("radio4", "value")
      ]
 )
-def folium_map(start_date, end_date, value, slide):
+def folium_map(start_date, end_date, value, slide,choice):
     # Select only unique values
     dfc_unique= df.query('MinutesElapsed==MaxR_Mins')
 
@@ -757,7 +903,7 @@ def folium_map(start_date, end_date, value, slide):
     cv2=pd.pivot_table(cv,index='UAdd', columns='resolution', values=['index_']).reset_index().fillna(0)
 
     #CHECK ORDER OF COLUMNS- Alphabetical
-    cv2.columns=['UAdd','NYPD_Action','NYPD_Late','NYPD_No-Action','NYPD_Summon']
+    cv2.columns=['UAdd','Action','Late','No-Action','Summon']
     B= pd.merge(c1, cv2, on='UAdd', how='right')
 
     # to get median
@@ -772,7 +918,7 @@ def folium_map(start_date, end_date, value, slide):
     E.Mean_Minutes=round(E.Mean_Minutes,2)
     F= pd.merge(D, E, on='UAdd', how='right') 
 
-    F['InAction_Rate']= round((F['NYPD_Late'] +F['NYPD_No-Action']) / F['total'],2)
+    F['InAction_Rate']= round((F['Late'] +F['No-Action']) / F['total'],2)
 
    # B17= F.query('total>50').sort_values('Median_Minutes', ascending=False)
 
@@ -788,38 +934,211 @@ def folium_map(start_date, end_date, value, slide):
     F = F.copy()
     F['Inaction_rank'] = F['InAction_Rate'].apply(Resp)
 
-    FA= F.query('Inaction_rank=="Low"')  
-    for index, row in FA.iterrows(): 
-        popup_text = "Address: {}<br> Total: {}<br> Inaction Rate: {}<br> Late#: {}<br> No-Action#: {}<br> Action#: {}<br> Summon#: {}"
-        popup_text = popup_text.format(row['Address'],row['total'],row['InAction_Rate'], row["NYPD_Late"],row['NYPD_No-Action'], row['NYPD_Action'], row['NYPD_Summon'])
-        folium.CircleMarker(location=(row["latitude"],row["longitude"]),
-                            radius=row['total'] / 15 + 3,
-                            color="#007849",
-                            popup=folium.Popup(popup_text, max_width=300),
-                            fill=True).add_to(nyc_map)
-    #
-    FB=F.query('Inaction_rank=="Medium"')   
-    for index, row in FB.iterrows(): 
-        popup_text = "Address: {}<br> Total: {}<br> Inaction Rate: {}<br> Late#: {}<br> No-Action#: {}<br> Action#: {}<br> Summon#: {}"
-        popup_text = popup_text.format(row['Address'],row['total'],row['InAction_Rate'], row["NYPD_Late"],row['NYPD_No-Action'], row['NYPD_Action'], row['NYPD_Summon'])
-        folium.CircleMarker(location=(row["latitude"],row["longitude"]),
-                            radius=row['total'] / 15 + 3,
-                            color="#FFB52E",
-                            popup=folium.Popup(popup_text, max_width=300),
-                            fill=True).add_to(nyc_map)
-    
-    FC=F.query('Inaction_rank=="High"')
-    for index, row in FC.iterrows(): 
-        popup_text = "Address: {}<br> Total: {}<br> Inaction Rate: {}<br> Late#: {}<br> No-Action#: {}<br> Action#: {}<br> Summon#: {}"
-        popup_text = popup_text.format(row['Address'],row['total'],row['InAction_Rate'], row["NYPD_Late"],row['NYPD_No-Action'], row['NYPD_Action'], row['NYPD_Summon'])
-        folium.CircleMarker(location=(row["latitude"],row["longitude"]),
-                            radius=row['total'] / 15 + 3,
-                            color="#E32227",
-                            popup=folium.Popup(popup_text, max_width=300),
-                            fill=True).add_to(nyc_map)  
-    
+    def Resp(x):
+        if x<=30:
+            return "Low" #5 mins or less
+        elif x>30 and x<=60:
+            return "Medium"
+        else:
+            return "High" # greater than 360 mins
+        
+    F = F.copy()
+    F['Time_rank'] = F['Median_Minutes'].apply(Resp)
 
+
+    F.dropna(subset=['longitude'], inplace=True)
+    F.dropna(subset=['latitude'], inplace=True)
+
+    if choice == 'inaction':
+        categories = [
+            ("Inaction_rank == 'Low'", "#007849"),  # Green
+            ("Inaction_rank == 'Medium'", "#FFB52E"),  # Orange
+            ("Inaction_rank == 'High'", "#E32227")  # Red
+        ]
+        # Add markers to the map
+        for query, color in categories:
+            category_df = F.query(query)
+            for _, row in category_df.iterrows():
+                popup_text = (
+                    f"Address: {row['Address']}<br>"
+                    f"CBoard: {row['cboard']}<br>"
+                    f"Total: {row['total']}<br>"
+                    f"InAction Rate: {row['InAction_Rate']}<br>"
+                    f"Late#: {row['Late']}<br>"
+                    f"No-Action#: {row['No-Action']}<br>"
+                    f"Action#: {row['Action']}<br>"
+                    f"Summon#: {row['Summon']}"
+                )
+                folium.CircleMarker(
+                    location=(row["latitude"], row["longitude"]),
+                    radius=row['total'] / 15 + 3,
+                    color=color,
+                    popup = folium.Popup(popup_text, max_width=300),
+                    fill=True
+                ).add_to(nyc_map)
+    else:
+        # Define marker categories
+        categories = [
+            ("Time_rank == 'Low'", "#007849"),  # Green
+            ("Time_rank == 'Medium'", "#FFB52E"),  # Orange
+            ("Time_rank == 'High'", "#E32227")  # Red
+        ]
+
+        # Add markers to the map
+        for query, color in categories:
+            category_df = F.query(query)
+            for _, row in category_df.iterrows():
+                popup_text = (
+                    f"Address: {row['Address']}<br>"
+                    f"CBoard: {row['cboard']}<br>"
+                    f"Total: {row['total']}<br>"
+                    f"MedianMin: {row['Median_Minutes']}<br>"
+                    f"MeanMin: {row['Mean_Minutes']}<br>"
+                    f"Min_0->5: {row['min0->5']}<br>"
+                    f"Min_5->30: {row['min5->30']}<br>"
+                    f"Min_30->60: {row['min30->60']}<br>"
+                    f"Min_60->360: {row['min60->360']}<br>"
+                    f"Min_360+: {row['min360+']}<br>"
+                )
+                folium.CircleMarker(
+                    location=(row["latitude"], row["longitude"]),
+                    radius=row['total'] / 15 + 3,
+                    color=color,
+                    popup = folium.Popup(popup_text, max_width=300),
+                    fill=True
+                ).add_to(nyc_map)    
+    
     return nyc_map._repr_html_()
+
+
+@app.callback(
+    Output("recent-table", "data"),
+    [Input('start-date', 'date'), 
+     Input('end-date', 'date'), 
+     Input("dropdown", "value")]
+)
+def recent_table(start_date, end_date, value):
+    # Filter by board selection
+    filtered_df = df[df["cboard_expand"] == value] if value != "All" else df
+
+    # Filter by date range
+    filtered_df = filtered_df[
+        (filtered_df["dateTime"] >= pd.to_datetime(start_date).date()) &
+        (filtered_df["dateTime"] <= pd.to_datetime(end_date).date())
+    ]
+
+    # Select relevant columns for the table
+    recent_df = filtered_df[['dateTime', 'Time', 'incident_address','precinct','resolution', 'MinutesElapsed']]
+    recent_df.columns = ['Date', 'Time','Address','Precinct', 'Resolution', 'Response_Mins']
+    
+    return recent_df.to_dict('records')
+
+@app.callback(
+    Output("download-link", "href"),
+    [Input("recent-table", "data")]
+)
+def generate_csv_download_link(data):
+    df_to_download = pd.DataFrame(data)
+    csv_buffer = io.StringIO()
+    df_to_download.to_csv(csv_buffer, index=False)
+    csv_string = "data:text/csv;charset=utf-8," + csv_buffer.getvalue()
+    return csv_string.replace('\n', '%0A')
+
+
+### Clickable Legend
+# Callback to toggle legend visibility
+@app.callback(
+    Output("legend-info", "style"),
+    Input("legend-button", "n_clicks"),
+    State("legend-info", "style")
+)
+def toggle_legend_visibility(n_clicks, current_style):
+    if n_clicks and current_style["display"] == "none":
+        return {"display": "block", "backgroundColor": "white", "border": "1px solid black", "padding": "10px"}
+    return {"display": "none"}
+
+
+# Callback to populate legend content
+@app.callback(
+    Output("legend-info", "children"),
+    Input("radio4", "value")
+)
+def update_legend_content(choice):
+    # Legend content based on selection
+    if choice == 'inaction':
+        legend_items = [
+            html.Div([
+                html.Span("", style={
+                    "display": "inline-block",
+                    "width": "15px",
+                    "height": "15px",
+                    "backgroundColor": "#007849",  # Color for 'Low'
+                    "marginRight": "10px"
+                }),
+                html.Span("Low: ", style={"fontWeight": "bold"}),
+                html.Span("Inaction < 0.5")
+            ], style={'marginBottom': '10px'}),
+            html.Div([
+                html.Span("", style={
+                    "display": "inline-block",
+                    "width": "15px",
+                    "height": "15px",
+                    "backgroundColor": "#FFB52E",  # Color for 'Medium'
+                    "marginRight": "10px"
+                }),
+                html.Span("Medium: ", style={"fontWeight": "bold"}),
+                html.Span("Inaction 0.5 to 0.75")
+            ], style={'marginBottom': '10px'}),
+            html.Div([
+                html.Span("", style={
+                    "display": "inline-block",
+                    "width": "15px",
+                    "height": "15px",
+                    "backgroundColor": "#E32227",  # Color for 'High'
+                    "marginRight": "10px"
+                }),
+                html.Span("High: ", style={"fontWeight": "bold"}),
+                html.Span("Inaction > 0.75")
+            ])
+        ]
+        return legend_items
+    else:
+        legend_items = [
+            html.Div([
+                html.Span("", style={
+                    "display": "inline-block",
+                    "width": "15px",
+                    "height": "15px",
+                    "backgroundColor": "#007849",  # Color for 'Low'
+                    "marginRight": "10px"
+                }),
+                html.Span("Low: ", style={"fontWeight": "bold"}),
+                html.Span("Median <= 30 mins")
+            ], style={'marginBottom': '10px'}),
+            html.Div([
+                html.Span("", style={
+                    "display": "inline-block",
+                    "width": "15px",
+                    "height": "15px",
+                    "backgroundColor": "#FFB52E",  # Color for 'Medium'
+                    "marginRight": "10px"
+                }),
+                html.Span("Medium: ", style={"fontWeight": "bold"}),
+                html.Span("Median 30 to 60 mins")
+            ], style={'marginBottom': '10px'}),
+            html.Div([
+                html.Span("", style={
+                    "display": "inline-block",
+                    "width": "15px",
+                    "height": "15px",
+                    "backgroundColor": "#E32227",  # Color for 'High'
+                    "marginRight": "10px"
+                }),
+                html.Span("High: ", style={"fontWeight": "bold"}),
+                html.Span("Median > 60 mins")
+            ])
+        ]
+        return legend_items      
 
 # Run the app
 if __name__ == "__main__":
