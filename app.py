@@ -22,6 +22,8 @@ df["MinutesElapsed"] = df["MinutesElapsed"].astype(float)
 # Dropdown options
 board_options = ["All"] + sorted(df["cboard_expand"].dropna().unique().astype(str))
 
+
+
 app = Dash(__name__, suppress_callback_exceptions=True)
 server = app.server
 
@@ -29,7 +31,7 @@ app.title = "311 Blocked Bike Lane Dashboard"
 update_date = date(2024, 12, 31)
 
 # Link external CSS
-app.css.append_css({"external_url": "/style.css"})
+app.css.append_css({"external_url": "/assets/styles.css"})
 
 # App layout
 app.layout = html.Div([
@@ -101,6 +103,7 @@ def render_content(tab):
                         ],
                         value="stat",
                         inline=True,
+                        className="dash-radioitems",
                     ),
                     dcc.Graph(id="resolution_bar", config={'displayModeBar': False}),
                 ]),
@@ -118,127 +121,133 @@ def render_content(tab):
                         ],
                         value="dist",
                         inline=True,
+                        className="dash-radioitems",
                     ),
                     dcc.Graph(id="density_bar", config={'displayModeBar': False}),
                 ]),
             ]),
             # History Graph
-            html.Div([
+            html.Div(className="container", children=[
                 dcc.Markdown("### What are the trends?", style={'textAlign': 'center'}),
-            ], style={'padding': 10}),
-            dcc.Markdown("**Note: (*) symbol** indicate adjustment for double-counting"),
-            html.Div([
-                dcc.RadioItems(
-                    id="radio3",
-                    options=[
-                        {"label": "Requests", "value": "request"},
-                        {"label": "InAction-Rate*", "value": "inaction"},
-                    ],
-                    value="request",
-                    inline=True,
-                ),
-                dcc.Graph(id="history", config={'displayModeBar': False})
+                dcc.Markdown("**Note: (*) symbol** indicate adjustment for double-counting"),
+                html.Div([
+                    dcc.RadioItems(
+                        id="radio3",
+                        options=[
+                            {"label": "Requests", "value": "request"},
+                            {"label": "InAction-Rate*", "value": "inaction"},
+                        ],
+                        value="request",
+                        inline=True,
+                        className="dash-radioitems",
+                    ),
+                    dcc.Graph(id="history", config={'displayModeBar': False})
+                ]),
             ]),
-
             #Interactive Map
-            html.Div([
+            html.Div(className="container", children=[
                 dcc.Markdown("### Where are the requests being made? (Interactive!)", style={'textAlign': 'center'}),
-            ], style={'padding': 10}),
+           # ], style={'padding': 10}),
             # Slider
-            html.H4("Select minimum count to display"),
-            dcc.Slider(
-                id="slider",
-                min=1,
-                max=10,
-                step=1,
-                marks={
-                    1: "1",2: "2",3: "3",4: "4",5: "5",
-                    6: "6",7: "7",8: "8",9: "9",10: "10",
-                },
-                value=3,
-            ),
-            html.Div([
-                dcc.RadioItems(
-                    id="radio4",
-                    options=[
-                        {"label": "InAction-Rate*", "value": "inaction"},
-                        {"label": "Response Time*", "value": "time"},
-                    ],
-                    value="inaction",
-                    inline=True,
+                html.H4("Select minimum count to display"),
+                dcc.Slider(
+                    id="slider",
+                    min=1,
+                    max=10,
+                    step=1,
+                    marks={
+                        1: "1",2: "2",3: "3",4: "4",5: "5",
+                        6: "6",7: "7",8: "8",9: "9",10: "10",
+                    },
+                    value=3,
+                    className="dash-slider",
                 ),
                 html.Div([
-                    html.Button("Toggle Legend", id="legend-button", style={'marginTop': '10px'}),
-                    html.Div(
-                        id="legend-info",
-                        style={
-                            'display': 'none',  # Hidden by default
-                            'backgroundColor': 'white',
-                            'border': '1px solid black',
-                            'padding': '10px',
-                            'borderRadius': '5px',
-                            'width': '300px',
-                            'margin': '10px auto',
-                            'textAlign': 'left'
-                        }
-                    )
-                ], style={'textAlign': 'center'}),
-                html.Iframe(id='folium-map', width='100%', height='600px')
+                    dcc.RadioItems(
+                        id="radio4",
+                        options=[
+                            {"label": "InAction-Rate*", "value": "inaction"},
+                            {"label": "Response Time*", "value": "time"},
+                        ],
+                        value="inaction",
+                        inline=True,
+                        className="dash-radioitems",
+                    ),
+                    html.Div([
+                        html.Button("Toggle Legend", id="legend-button", style={'marginTop': '10px'}),
+                        html.Div(
+                            id="legend-info",
+                            style={
+                                'display': 'none',  # Hidden by default
+                                'backgroundColor': 'white',
+                                'border': '1px solid black',
+                                'padding': '10px',
+                                'borderRadius': '5px',
+                                'width': '300px',
+                                'margin': '10px auto',
+                                'textAlign': 'left'
+                            }
+                        )
+                    ], style={'textAlign': 'center'}),
+                    html.Iframe(id='folium-map', width='100%', height='600px')
+                ]),
             ]),
-            html.Div([
-                dcc.Markdown("### Recent 311 Blocked Bike Lane Service Requests", style={'textAlign': 'center'}),
-            ], style={'padding': 10}),
-
-            # Data Table
-            dash_table.DataTable(
-                id="recent-table",
-                columns=[
-                    {"name": i, "id": i, "deletable": False, "selectable": True} for i in 
-                    ['Date', 'Time', 'Address', 'Precinct', 'Resolution', 'Response_Mins']
-                ],
-                style_table={
-                    'overflowX': 'auto', 
-                    'maxWidth': '100%',
-                },
-                style_header={
-                    'backgroundColor': '#B0E0E6',
-                    'fontWeight': 'bold',
-                    'border': '1px solid black',
-                },
-                style_data={
-                    'border': '1px solid black',
-                    'whiteSpace': 'normal',
-                    'height': 'auto',  # Allow row wrapping for long text
-                },
-                style_data_conditional=[
-                    {'if': {'filter_query': '{Resolution} = "Late"'}, 'backgroundColor': '#ffb5c0'},
-                    {'if': {'filter_query': '{Resolution} = "Action"'}, 'backgroundColor': '#D5F5E3'},
-                    {'if': {'filter_query': '{Resolution} = "No-Action"'}, 'backgroundColor': '#ffdbbb'},
-                    {'if': {'filter_query': '{Resolution} = "Summon"'}, 'backgroundColor': '#ADD8E6'}
-                ],
-                style_cell={
-                    'textAlign': 'left',
-                    'padding': '5px',
-                    'minWidth': '80px',
-                    'maxWidth': '200px',
-                    'overflow': 'hidden',
-                    'textOverflow': 'ellipsis',
-                },
-                page_size=10,
-                sort_action='native',
-                fixed_rows={'headers': False},  # Disable fixed headers for mobile scrolling
-            ),
             
-            # Download Button
-            html.A(
-                "Download CSV",
-                id="download-link",
-                download="filtered_data.csv",
-                href="",
-                target="_blank",
-                style={'margin-bottom': 'auto', 'margin-right': '0', 'float': 'right'}
-            )
-        ], style={'width': '80%', 'margin': 'auto'})
+            # 311 Data Table
+            html.Div(className="container", children=[
+                dcc.Markdown("### Recent 311 Blocked Bike Lane Service Requests", style={'textAlign': 'center'}),
+
+                # Data Table
+                dash_table.DataTable(
+                    id="recent-table",
+                    columns=[
+                        {"name": i, "id": i, "deletable": False, "selectable": True} for i in 
+                        ['Date', 'Time', 'Address', 'Precinct', 'Resolution', 'Response_Mins']
+                    ],
+                    style_table={
+                        'overflowX': 'auto', 
+                        'maxWidth': '100%',
+                    },
+                    style_header={
+                        'backgroundColor': '#B0E0E6',
+                        'fontWeight': 'bold',
+                        'border': '1px solid black',
+                    },
+                    style_data={
+                        'border': '1px solid black',
+                        'whiteSpace': 'normal',
+                        'height': 'auto',  # Allow row wrapping for long text
+                    },
+                    style_data_conditional=[
+                        {'if': {'filter_query': '{Resolution} = "Late"'}, 'backgroundColor': '#ffb5c0'},
+                        {'if': {'filter_query': '{Resolution} = "Action"'}, 'backgroundColor': '#D5F5E3'},
+                        {'if': {'filter_query': '{Resolution} = "No-Action"'}, 'backgroundColor': '#ffdbbb'},
+                        {'if': {'filter_query': '{Resolution} = "Summon"'}, 'backgroundColor': '#ADD8E6'}
+                    ],
+                    style_cell={
+                        'textAlign': 'left',
+                        'padding': '5px',
+                        'minWidth': '80px',
+                        'maxWidth': '200px',
+                        'overflow': 'hidden',
+                        'textOverflow': 'ellipsis',
+                    },
+                    page_size=10,
+                    sort_action='native',
+                    fixed_rows={'headers': False},  # Disable fixed headers for mobile scrolling
+                ),
+                
+                # Download Button
+                html.A(
+                    "Download CSV",
+                    id="download-link",
+                    download="filtered_data.csv",
+                    href="",
+                    target="_blank",
+                    style={'margin-bottom': 'auto', 'margin-right': '0', 'float': 'right'}
+                )
+            ], style={'width': '80%', 'margin': 'auto'})
+        ])
 
     elif tab == 'tab-2':
         return html.Div([
