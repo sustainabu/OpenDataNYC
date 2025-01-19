@@ -28,6 +28,9 @@ server = app.server
 app.title = "311 Blocked Bike Lane Dashboard"
 update_date = date(2024, 12, 31)
 
+# Link external CSS
+app.css.append_css({"external_url": "/style.css"})
+
 # App layout
 app.layout = html.Div([
     dcc.Tabs(id='tabs-nav', value='tab-1', children=[
@@ -50,79 +53,74 @@ def render_content(tab):
                 f"Each record is a 311 Service Request for 'Blocked Bike Lane' Violation. "
                 f"This dashboard explores NYPD response. **Last Updated: {update_date}**"
             ),
-            dcc.Markdown("## Select Parameters", style={'textAlign': 'center'}),
 
-            # Date Pickers with horizontal space
-            html.Div([
+            html.Div(className="container", children=[
+                dcc.Markdown("## Select Parameters", style={'textAlign': 'center'}),
                 html.Div([
-                    dcc.Markdown("**Start Date**"),
-                    dcc.DatePickerSingle(
-                        id='start-date',
-                        min_date_allowed=date(2021, 1, 1),
-                        max_date_allowed=update_date,
-                        date=date(2023, 1, 1),
-                        placeholder='Select Start Date'
-                    ),
-                ], style={'marginRight': '20px'}),  # Space between date pickers
-
+                    html.Div([
+                        dcc.Markdown("**Start Date**"),
+                        dcc.DatePickerSingle(
+                            id='start-date',
+                            min_date_allowed=date(2021, 1, 1),
+                            max_date_allowed=update_date,
+                            date=date(2023, 1, 1),
+                            placeholder='Select Start Date'
+                        ),
+                    ], style={'marginRight': '20px'}),
+                    html.Div([
+                        dcc.Markdown("**End Date**"),
+                        dcc.DatePickerSingle(
+                            id='end-date',
+                            min_date_allowed=date(2021, 1, 1),
+                            max_date_allowed=update_date,
+                            date=update_date,
+                            placeholder='Select End Date'
+                        ),
+                    ]),
+                ], style={'display': 'flex', 'flexDirection': 'row', 'marginBottom': '20px'}),
                 html.Div([
-                    dcc.Markdown("**End Date**"),
-                    dcc.DatePickerSingle(
-                        id='end-date',
-                        min_date_allowed=date(2021, 1, 1),
-                        max_date_allowed=update_date,
-                        date=update_date,
-                        placeholder='Select End Date'
-                    ),
+                    html.H4("Select Community Board"),
+                    dcc.Dropdown(board_options, value="All", id="dropdown", style={'marginBottom': 20}),
                 ]),
-            ], style={'display': 'flex', 'flexDirection': 'row', 'marginBottom': '20px'}),
-
-            # Dropdown for Board Selection
-            html.Div([
-                html.H4("Select Community Board"),
-                dcc.Dropdown(board_options, value="All", id="dropdown", style={'marginBottom': 20}),
             ]),
 
-            # Additional Section Title
-            html.Div([
+            html.Div(className="container", children=[
                 dcc.Markdown("### How does NYPD respond?", style={'textAlign': 'center'}),
-            ], style={'padding': 10}),
-            # Plot
-            dcc.Graph(id="pie"),
-
-            # Response Time Bar
-            html.Div([
-                dcc.Markdown("### What is NYPD Response Time?", style={'textAlign': 'center'}),
-            ], style={'padding': 10}),
-            dcc.Markdown("**Note:** Response times less than 5 minutes are likely fraud by NYPD supported by investigative studies"),
-            html.Div([
-                dcc.RadioItems(
-                    id="radio1",
-                    options=[
-                        {"label": "Summary", "value": "stat"},
-                        {"label": "Time Distribution", "value": "dist"},
-                    ],
-                    value="stat",
-                    inline=True,
-                ),
-                dcc.Graph(id="resolution_bar", config={'displayModeBar': False})
+                dcc.Graph(id="pie"),
             ]),
-            # Density Bar
-            html.Div([
+
+            html.Div(className="container", children=[
+                dcc.Markdown("### What is NYPD Response Time?", style={'textAlign': 'center'}),
+                dcc.Markdown("**Note:** Response times less than 5 minutes are likely fraud by NYPD supported by investigative studies"),
+                html.Div([
+                    dcc.RadioItems(
+                        id="radio1",
+                        options=[
+                            {"label": "Summary", "value": "stat"},
+                            {"label": "Time Distribution", "value": "dist"},
+                        ],
+                        value="stat",
+                        inline=True,
+                    ),
+                    dcc.Graph(id="resolution_bar", config={'displayModeBar': False}),
+                ]),
+            ]),
+
+            html.Div(className="container", children=[
                 dcc.Markdown("### Are NYPD responsive if multiple requests were made (i.e. call-density)?", style={'textAlign': 'center'}),
-            ], style={'padding': 10}),
-            html.Div([
-                dcc.RadioItems(
-                    id="radio2",
-                    options=[
-                        {"label": "Summary", "value": "dist"},
-                        {"label": "Resolution", "value": "resolution"},
-                        {"label": "Response Time", "value": "time"},
-                    ],
-                    value="dist",
-                    inline=True,
-                ),
-                dcc.Graph(id="density_bar", config={'displayModeBar': False})
+                html.Div([
+                    dcc.RadioItems(
+                        id="radio2",
+                        options=[
+                            {"label": "Summary", "value": "dist"},
+                            {"label": "Resolution", "value": "resolution"},
+                            {"label": "Response Time", "value": "time"},
+                        ],
+                        value="dist",
+                        inline=True,
+                    ),
+                    dcc.Graph(id="density_bar", config={'displayModeBar': False}),
+                ]),
             ]),
             # History Graph
             html.Div([
