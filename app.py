@@ -1,3 +1,6 @@
+import sys
+print(sys.executable)
+
 from dash import Dash, html, dcc, callback, Output, Input, dash_table, State
 from datetime import date
 import plotly.express as px
@@ -8,6 +11,7 @@ import folium
 import io
 from io import BytesIO
 import base64
+import dash_bootstrap_components as dbc
 
 # Load data
 df = pd.read_csv(
@@ -23,8 +27,7 @@ df["MinutesElapsed"] = df["MinutesElapsed"].astype(float)
 board_options = ["All"] + sorted(df["cboard_expand"].dropna().unique().astype(str))
 
 
-
-app = Dash(__name__, suppress_callback_exceptions=True)
+app = Dash(__name__, suppress_callback_exceptions=True,external_stylesheets=[dbc.themes.BOOTSTRAP])
 server = app.server
 
 app.title = "311 Blocked Bike Lane Dashboard"
@@ -41,6 +44,11 @@ app.layout = html.Div([
     ]),
     html.Div(id='tabs-content'),
 ])
+
+#Sidebar Layput
+# App layout
+
+
 
 # Callback to render tab content
 @app.callback(
@@ -86,6 +94,7 @@ def render_content(tab):
                 ]),
             ]),
 
+
             html.Div(className="container", children=[
                 dcc.Markdown("### How does NYPD respond?", style={'textAlign': 'center'}),
                 dcc.Graph(id="pie"),
@@ -105,7 +114,13 @@ def render_content(tab):
                         inline=True,
                         className="dash-radioitems",
                     ),
-                    dcc.Graph(id="resolution_bar", config={'displayModeBar': False}),
+                    dcc.Graph(
+                        id="resolution_bar",
+                        config={
+                            "scrollZoom": False,      # Disable zoom with scrolling
+                            "doubleClick": "reset",  # Reset the plot on double-click
+                            "displayModeBar": True,  # Enable the mode bar for other features
+                        }),
                 ]),
             ]),
 
@@ -123,7 +138,14 @@ def render_content(tab):
                         inline=True,
                         className="dash-radioitems",
                     ),
-                    dcc.Graph(id="density_bar", config={'displayModeBar': False}),
+                    dcc.Graph(
+                        id="density_bar",
+                        config={
+                            "scrollZoom": False,      # Disable zoom with scrolling
+                            "doubleClick": "reset",  # Reset the plot on double-click
+                            "displayModeBar": True,  # Enable the mode bar for other features
+                            }
+                    ),
                 ]),
             ]),
             # History Graph
@@ -141,7 +163,14 @@ def render_content(tab):
                         inline=True,
                         className="dash-radioitems",
                     ),
-                    dcc.Graph(id="history", config={'displayModeBar': False})
+                    dcc.Graph(
+                        id="history",
+                        config={
+                            "scrollZoom": False,      # Disable zoom with scrolling
+                            "doubleClick": "reset",  # Reset the plot on double-click
+                            "displayModeBar": True,  # Enable the mode bar for other features
+                            }
+                    ),
                 ]),
             ]),
             #Interactive Map
@@ -306,7 +335,7 @@ def update_graph(start_date, end_date, value):
         grouped_data,
         names="resolution",
         values="Count",
-        title=f"Total 311 NYPD Service Resolutions for {valueT()}: {filtered_df['index_'].sum()} Requests"
+        title=f"Total Resolutions for {valueT()}: {filtered_df['index_'].sum()}"
     )
 
     # Adjust the layout for the legend
@@ -428,7 +457,7 @@ def bar_graph(start_date, end_date, value, choice):
 
     fig1.update_layout(
         barmode='group',
-        title=f"NYPD Resolution Response Time (Minutes) for {valueT()}",
+        title=f"Response Time (Minutes) for {valueT()}",
         legend=dict(
             orientation='h',  # Horizontal legend
             yanchor='bottom',
@@ -557,7 +586,7 @@ def density_graph(start_date, end_date, value, choice):
         grouped_data,
         names="RepeatBin",
         values="Count",
-        title=f"Total Call-Density Breakdown for {valueT()}: {dfc_unique['index_'].sum()} Requests"
+        title=f"Total Call-Density for {valueT()}: {dfc_unique['index_'].sum()}"
     )
 
     # Adjust the layout for the legend
@@ -794,6 +823,7 @@ def history_graph(start_date, end_date, value, choice):
     if choice == 'request':
         bg = filtered_df.groupby(['WeekBin', 'Year'])['index_'].sum().unstack()
         traces = []
+        nl = '\n'
         for year in bg.columns:
             linestyle = 'solid' if year == current_year else 'dash'
             traces.append(go.Scatter(
@@ -802,7 +832,7 @@ def history_graph(start_date, end_date, value, choice):
                 name=str(year),
                 line=dict(dash=linestyle, color=custom_palette[year % len(custom_palette)])
             ))
-        title = f"311 Blocked Bike Lane Requests History for {valueT()} from {start_date} to {end_date}"
+        title = f"3ll BBL Requests History for {valueT()}{nl} from {start_date} to {end_date}"
 
         # Create Plotly figure
         figure = go.Figure(data=traces)
@@ -816,6 +846,7 @@ def history_graph(start_date, end_date, value, choice):
 
     else:
         traces = []
+        nl = '\n'
         for year in df1['Year'].unique():
             df_year = df1[df1['Year'] == year]
             linestyle = 'solid' if year == current_year else 'dash'
@@ -825,7 +856,7 @@ def history_graph(start_date, end_date, value, choice):
                 name=str(year),
                 line=dict(dash=linestyle, color=custom_palette[year % len(custom_palette)])
             ))
-        title = f"311 NYPD InAction Rate History for {valueT()} from {start_date} to {end_date}"
+        title = f"BBL InAction Rate History for {valueT()}{nl} from {start_date} to {end_date}"
 
     # Create Plotly figure
     figure = go.Figure(data=traces)
