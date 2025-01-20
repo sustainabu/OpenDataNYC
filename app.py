@@ -33,8 +33,9 @@ server = app.server
 app.title = "311 Blocked Bike Lane Dashboard"
 update_date = date(2024, 12, 31)
 
+#My Code
 # Link external CSS
-app.css.append_css({"external_url": "/assets/styles.css"})
+#app.css.append_css({"external_url": "/assets/styles.css"})
 
 # App layout
 app.layout = html.Div([
@@ -414,7 +415,7 @@ def bar_graph(start_date, end_date, value, choice):
     # Group and pivot with predefined bins
     df_bins = filtered_df[bins_cols].groupby(["resolution", "ElapsedMinuteBin"]).sum().reset_index()
     df_bins["ElapsedMinuteBin"] = pd.Categorical(df_bins["ElapsedMinuteBin"], categories=elapsed_bins, ordered=True)
-    df_bins = df_bins.pivot_table(index="resolution", columns="ElapsedMinuteBin", values="index_", fill_value=0).reset_index()
+    df_bins = df_bins.pivot_table(index="resolution", columns="ElapsedMinuteBin", values="index_", fill_value=0, observed=False).reset_index()
 
     # Ensure all bins are included
     df_bins = df_bins.reindex(columns=["resolution"] + elapsed_bins, fill_value=0)
@@ -608,7 +609,7 @@ def density_graph(start_date, end_date, value, choice):
     # Group and pivot with predefined bins
     df_bins = dfc_unique[bins_cols].groupby(["RepeatBin", "resolution"]).sum().reset_index()
     df_bins["resolution"] = pd.Categorical(df_bins["resolution"], categories=resolution_bins, ordered=True)
-    df_bins = df_bins.pivot_table(index="RepeatBin", columns="resolution", values="index_", fill_value=0).reset_index()
+    df_bins = df_bins.pivot_table(index="RepeatBin", columns="resolution", values="index_", fill_value=0,observed=False).reset_index()
     
     # Ensure all bins are included
     df_bins = df_bins.reindex(columns=["RepeatBin"] + resolution_bins, fill_value=0)
@@ -623,7 +624,7 @@ def density_graph(start_date, end_date, value, choice):
     # Group and pivot with predefined bins
     df_bins = dfc_unique[bins_cols].groupby(["RepeatBin","ElapsedMinuteBin"]).sum().reset_index()
     df_bins["ElapsedMinuteBin"] = pd.Categorical(df_bins["ElapsedMinuteBin"], categories=elapsed_bins, ordered=True)
-    df_bins = df_bins.pivot_table(index="RepeatBin", columns="ElapsedMinuteBin", values="index_", fill_value=0).reset_index()
+    df_bins = df_bins.pivot_table(index="RepeatBin", columns="ElapsedMinuteBin", values="index_", fill_value=0, observed=False).reset_index()
     
     # Ensure all bins are included
     df_bins = df_bins.reindex(columns=["RepeatBin"] + elapsed_bins, fill_value=0)
