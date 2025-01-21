@@ -11,7 +11,7 @@ import folium
 import io
 from io import BytesIO
 import base64
-import dash_bootstrap_components as dbc
+#import dash_bootstrap_components as dbc
 
 # Load data
 df = pd.read_csv(
@@ -27,7 +27,7 @@ df["MinutesElapsed"] = df["MinutesElapsed"].astype(float)
 board_options = ["All"] + sorted(df["cboard_expand"].dropna().unique().astype(str))
 
 
-app = Dash(__name__, suppress_callback_exceptions=True,external_stylesheets=[dbc.themes.BOOTSTRAP])
+app = Dash(__name__, suppress_callback_exceptions=True) #,external_stylesheets=[dbc.themes.BOOTSTRAP])
 server = app.server
 
 app.title = "311 Blocked Bike Lane Dashboard"
