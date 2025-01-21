@@ -44,21 +44,8 @@ app.layout = html.Div([
         dcc.Tab(label='About', value='tab-2'),
     ]),
     html.Div(id='tabs-content'),
-    html.Script("""
-        document.addEventListener("DOMContentLoaded", function () {
-            // Add 'readonly' attribute to inputs on focus
-            document.querySelectorAll("input[type='text']").forEach(function (input) {
-                input.setAttribute("readonly", true);
-            });
-
-            // Ensure 'readonly' persists on focus
-            document.querySelectorAll("input[type='text']").forEach(function (input) {
-                input.addEventListener("focus", function () {
-                    input.setAttribute("readonly", true);
-                });
-            });
-        });
-    """),
+    # Hidden store for triggering client-side blurring
+    dcc.Store(id='blur-trigger')
 ])
 
 #Sidebar Layput
@@ -108,7 +95,21 @@ def render_content(tab):
                     html.H4("Select Community Board"),
                     dcc.Dropdown(board_options, value="All", id="dropdown", style={'marginBottom': 20}),
                 ]),
+                html.Script("""
+                    document.addEventListener("DOMContentLoaded", function () {
+                        // Add 'readonly' attribute to inputs on focus
+                        document.querySelectorAll("input[type='text']").forEach(function (input) {
+                            input.setAttribute("readonly", true);
+                        });
 
+                        // Ensure 'readonly' persists on focus
+                        document.querySelectorAll("input[type='text']").forEach(function (input) {
+                            input.addEventListener("focus", function () {
+                                input.setAttribute("readonly", true);
+                            });
+                        });
+                    });
+                """),
             ]),
 
 
@@ -1230,6 +1231,24 @@ def update_legend_content(choice):
             ])
         ]
         return legend_items      
+
+# Client-side callback to blur inputs
+app.clientside_callback(
+    """
+    function(trigger) {
+        // Select all input elements that might trigger a keyboard
+        document.querySelectorAll('.DateInput_input, .Select-input').forEach(function(el) {
+            el.addEventListener('focus', function() {
+                el.blur();
+            });
+        });
+        return null;
+    }
+    """,
+    Output('blur-trigger', 'data'),  # This is a no-op output just to trigger the script
+    Input('tabs-nav', 'value')  # Trigger on tab selection (or any other event)
+)
+
 
 # Run the app
 if __name__ == "__main__":
