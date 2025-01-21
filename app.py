@@ -219,7 +219,7 @@ def render_content(tab):
                             }
                         )
                     ], style={'textAlign': 'center'}),
-                    html.Iframe(id='folium-map', width='100%', height='600px')
+                    html.Iframe(id='folium-map', width='100%', height='400px')
                 ]),
             ]),
             
@@ -428,7 +428,7 @@ def bar_graph(start_date, end_date, value, choice):
 
     # Step 3: Add Citywide Totals
     city_data = [
-        "All_resolutions",
+        "All",
         result_df["Total"].sum(),
         round(filtered_df["MinutesElapsed"].median(), 2),
         round(filtered_df["MinutesElapsed"].mean(), 2),
@@ -459,6 +459,7 @@ def bar_graph(start_date, end_date, value, choice):
     fig1.update_layout(
         barmode='group',
         title=f"Response Time (Minutes) for {valueT()}",
+        title_x=0.5,
         legend=dict(
             orientation='h',  # Horizontal legend
             yanchor='bottom',
@@ -512,11 +513,19 @@ def bar_graph(start_date, end_date, value, choice):
         textposition='inside',  # Position the text inside the bars
     ))
 
-    quarters = ['All_resolutions','Summon','Action','No-Action','Late']
+    quarters = ['All','Summon','Action','No-Action','Late']
 
     fig2.update_layout(
         xaxis=dict(ticksuffix='%'),
-        yaxis=dict(categoryorder='array', categoryarray=quarters),
+        yaxis=dict(categoryorder='array',
+                   categoryarray=quarters,
+                   tickangle=-90,
+                    title=dict(
+                        text='',  # Set your desired label text
+                        standoff=10,          # Space between label and axis
+                        font=dict(size=12),   # Customize font size
+                    ),
+                ),
         barmode='stack',
         template='plotly_white',
         legend=dict(
@@ -824,7 +833,7 @@ def history_graph(start_date, end_date, value, choice):
     if choice == 'request':
         bg = filtered_df.groupby(['WeekBin', 'Year'])['index_'].sum().unstack()
         traces = []
-        nl = '\n'
+        nl = '<br>'  # HTML line break for Plotly titles
         for year in bg.columns:
             linestyle = 'solid' if year == current_year else 'dash'
             traces.append(go.Scatter(
@@ -833,21 +842,36 @@ def history_graph(start_date, end_date, value, choice):
                 name=str(year),
                 line=dict(dash=linestyle, color=custom_palette[year % len(custom_palette)])
             ))
-        title = f"3ll BBL Requests History for {valueT()}{nl} from {start_date} to {end_date}"
+        title = f"<b>Requests History for {valueT()}{nl}from {start_date} to {end_date}</b>"
 
         # Create Plotly figure
         figure = go.Figure(data=traces)
         figure.update_layout(
-            title=title,
+            title=dict(
+                text=title,
+                font=dict(size=14),  # Adjust font size
+                x=0.5,               # Center align the title
+                xanchor='center',
+                yanchor='top',
+            ),
             xaxis_title='WeekBin (0 = beginning of year)',
             yaxis_title='',
-            legend_title='Year',
-            template='plotly_white'
-        ) 
+            legend_title='',
+            template='plotly_white',
+            legend=dict(
+                orientation='h',  # Horizontal legend
+                yanchor='bottom',
+                y=-0.25,  # Position below the chart
+                xanchor='center',
+                x=0.5,  # Centered horizontally
+                traceorder='normal'
+            ),
+            margin=dict(l=10, r=10, t=80, b=10)  # Add padding to the top with `t`
+        )
 
     else:
         traces = []
-        nl = '\n'
+        nl = '<br>'  # HTML line break for Plotly titles
         for year in df1['Year'].unique():
             df_year = df1[df1['Year'] == year]
             linestyle = 'solid' if year == current_year else 'dash'
@@ -857,24 +881,32 @@ def history_graph(start_date, end_date, value, choice):
                 name=str(year),
                 line=dict(dash=linestyle, color=custom_palette[year % len(custom_palette)])
             ))
-        title = f"BBL InAction Rate History for {valueT()}{nl} from {start_date} to {end_date}"
+        title = f"<b>InAction Rate History for {valueT()}{nl} from {start_date} to {end_date}</b>"
 
-    # Create Plotly figure
-    figure = go.Figure(data=traces)
-    figure.update_layout(
-        title=title,
-        xaxis_title='WeekBin (0 = beginning of year)',
-        yaxis_title='',
-        template='plotly_white',
-        legend=dict(
-            orientation='h',  # Horizontal legend
-            yanchor='top',
-            y=-0.2,  # Position below the chart
-            xanchor='center',
-            x=0.5  # Center horizontally
-        ),
-        margin=dict(t=50, b=100)  # Adjust margins for space
-    )
+        # Create Plotly figure
+        figure = go.Figure(data=traces)
+        figure.update_layout(
+            title=dict(
+                text=title,
+                font=dict(size=14),  # Adjust font size
+                x=0.5,               # Center align the title
+                xanchor='center',
+                yanchor='top',
+            ),
+            xaxis_title='WeekBin (0 = beginning of year)',
+            yaxis_title='',
+            legend_title='',
+            legend=dict(
+                orientation='h',  # Horizontal legend
+                yanchor='bottom',
+                y=-0.25,  # Position below the chart
+                xanchor='center',
+                x=0.5,  # Centered horizontally
+                traceorder='normal'
+            ),
+            template='plotly_white',
+            margin=dict(l=10, r=10, t=80, b=10)  # Add padding to the top with `t`
+        )
     return figure
 
 
