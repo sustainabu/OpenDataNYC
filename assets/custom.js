@@ -1,13 +1,15 @@
-document.addEventListener("DOMContentLoaded", function () {
-    // Add 'readonly' attribute to date pickers and dropdowns on focus
-    document.querySelectorAll("input[type='text'], .Select-input input").forEach(function (input) {
-        input.setAttribute("readonly", true);
+document.addEventListener('DOMContentLoaded', function () {
+    // Blur the date picker input fields after selection
+    document.querySelectorAll('.DateInput_input').forEach(function (el) {
+        el.addEventListener('focus', function () {
+            el.blur();
+        });
     });
 
-    // Remove 'readonly' when the input loses focus
-    document.querySelectorAll("input[type='text'], .Select-input input").forEach(function (input) {
-        input.addEventListener("focus", function () {
-            input.setAttribute("readonly", true);
+    // Blur the dropdown input fields after selection
+    document.querySelectorAll('.Select-input').forEach(function (el) {
+        el.addEventListener('focus', function () {
+            el.blur();
         });
     });
 });
