@@ -1235,15 +1235,28 @@ def update_legend_content(choice):
 # Client-side callback to blur inputs
 app.clientside_callback(
     """
-    function(trigger) {
-        // Select all input elements that might trigger a keyboard
-        document.querySelectorAll('.DateInput_input, .Select-input').forEach(function(el) {
-            el.addEventListener('focus', function() {
-                el.blur();
+    document.addEventListener('DOMContentLoaded', function() {
+        // Collapse navbar after menu item is clicked
+        const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
+        const navbarCollapse = document.querySelector('.navbar-collapse');
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                if (navbarCollapse.classList.contains('show')) {
+                    navbarCollapse.classList.remove('show');
+                }
             });
         });
-        return null;
-    }
+
+        const inputs = document.querySelectorAll('input[type="number"], input[type="text"]');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function(e) {
+                if (window.innerWidth <= 768) {  // Adjust width for mobile detection
+                    e.target.blur();  // Remove focus to prevent the keyboard from popping up
+                }
+            });
+        });
+    });
     """,
     Output('blur-trigger', 'data'),  # This is a no-op output just to trigger the script
     Input('tabs-nav', 'value')  # Trigger on tab selection (or any other event)
