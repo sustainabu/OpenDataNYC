@@ -58,7 +58,7 @@ app.layout = html.Div([
                 });
             });
         });
-    """)
+    """),
 ])
 
 #Sidebar Layput
@@ -108,6 +108,7 @@ def render_content(tab):
                     html.H4("Select Community Board"),
                     dcc.Dropdown(board_options, value="All", id="dropdown", style={'marginBottom': 20}),
                 ]),
+
             ]),
 
 
