@@ -44,8 +44,24 @@ app.layout = html.Div([
         dcc.Tab(label='About', value='tab-2'),
     ]),
     html.Div(id='tabs-content'),
-    # Hidden store for triggering client-side blurring
-    dcc.Store(id='blur-trigger')
+    # Inject JavaScript directly into the layout
+    html.Script("""
+        document.addEventListener('DOMContentLoaded', function () {
+            // Blur the date picker input fields after selection
+            document.querySelectorAll('.DateInput_input').forEach(function (el) {
+                el.addEventListener('focus', function () {
+                    el.blur();
+                });
+            });
+
+            // Blur the dropdown input fields after selection
+            document.querySelectorAll('.Select-input input').forEach(function (el) {
+                el.addEventListener('focus', function () {
+                    el.blur();
+                });
+            });
+        });
+    """)
 ])
 
 #Sidebar Layput
@@ -77,8 +93,7 @@ def render_content(tab):
                             min_date_allowed=date(2021, 1, 1),
                             max_date_allowed=update_date,
                             date=date(2023, 1, 1),
-                            placeholder='Select Start Date',
-                            readOnly=True
+                            placeholder='Select Start Date'
                         ),
                     ], style={'marginRight': '20px'}),
                     html.Div([
@@ -88,15 +103,29 @@ def render_content(tab):
                             min_date_allowed=date(2021, 1, 1),
                             max_date_allowed=update_date,
                             date=update_date,
-                            placeholder='Select End Date',
-                            readOnly=True
+                            placeholder='Select End Date'
                         ),
                     ]),
                 ], style={'display': 'flex', 'flexDirection': 'row', 'marginBottom': '20px'}),
                 html.Div([
                     html.H4("Select Community Board"),
-                    dcc.Dropdown(board_options, value="All", id="dropdown",readOnly=True, style={'marginBottom': 20}),
+                    dcc.Dropdown(board_options, value="All", id="dropdown", style={'marginBottom': 20}),
                 ]),
+                html.Script("""
+                    document.addEventListener("DOMContentLoaded", function () {
+                        // Add 'readonly' attribute to inputs on focus
+                        document.querySelectorAll("input[type='text']").forEach(function (input) {
+                            input.setAttribute("readonly", true);
+                        });
+
+                        // Ensure 'readonly' persists on focus
+                        document.querySelectorAll("input[type='text']").forEach(function (input) {
+                            input.addEventListener("focus", function () {
+                                input.setAttribute("readonly", true);
+                            });
+                        });
+                    });
+                """),
             ]),
 
 
@@ -1218,37 +1247,6 @@ def update_legend_content(choice):
             ])
         ]
         return legend_items      
-
-# Client-side callback to blur inputs
-app.clientside_callback(
-    """
-    document.addEventListener('DOMContentLoaded', function() {
-        // Collapse navbar after menu item is clicked
-        const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
-        const navbarCollapse = document.querySelector('.navbar-collapse');
-
-        navLinks.forEach(link => {
-            link.addEventListener('click', function() {
-                if (navbarCollapse.classList.contains('show')) {
-                    navbarCollapse.classList.remove('show');
-                }
-            });
-        });
-
-        const inputs = document.querySelectorAll('input[type="number"], input[type="text"]');
-        inputs.forEach(input => {
-            input.addEventListener('focus', function(e) {
-                if (window.innerWidth <= 768) {  // Adjust width for mobile detection
-                    e.target.blur();  // Remove focus to prevent the keyboard from popping up
-                }
-            });
-        });
-    });
-    """,
-    Output('blur-trigger', 'data'),  # This is a no-op output just to trigger the script
-    Input('tabs-nav', 'value')  # Trigger on tab selection (or any other event)
-)
-
 
 # Run the app
 if __name__ == "__main__":
