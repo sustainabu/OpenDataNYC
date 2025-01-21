@@ -44,6 +44,21 @@ app.layout = html.Div([
         dcc.Tab(label='About', value='tab-2'),
     ]),
     html.Div(id='tabs-content'),
+    html.Script("""
+        document.addEventListener("DOMContentLoaded", function () {
+            // Add 'readonly' attribute to inputs on focus
+            document.querySelectorAll("input[type='text']").forEach(function (input) {
+                input.setAttribute("readonly", true);
+            });
+
+            // Ensure 'readonly' persists on focus
+            document.querySelectorAll("input[type='text']").forEach(function (input) {
+                input.addEventListener("focus", function () {
+                    input.setAttribute("readonly", true);
+                });
+            });
+        });
+    """)
 ])
 
 #Sidebar Layput
