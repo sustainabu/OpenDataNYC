@@ -29,8 +29,24 @@ app.layout = html.Div([
     ]),
     html.Div(id='tabs-content'),
 
-    # Hidden store for triggering client-side blurring
-    dcc.Store(id='blur-trigger')
+    # Inject JavaScript directly into the layout
+    html.Script("""
+        document.addEventListener('DOMContentLoaded', function () {
+            // Blur the date picker input fields after selection
+            document.querySelectorAll('.DateInput_input').forEach(function (el) {
+                el.addEventListener('focus', function () {
+                    el.blur();
+                });
+            });
+
+            // Blur the dropdown input fields after selection
+            document.querySelectorAll('.Select-input').forEach(function (el) {
+                el.addEventListener('focus', function () {
+                    el.blur();
+                });
+            });
+        });
+    """)
 ])
 
 # Callback to render tab content
@@ -89,22 +105,6 @@ def render_content(tab):
             ]),
         ], style={'width': '80%', 'margin': 'auto'})
 
-# Client-side callback to blur inputs
-app.clientside_callback(
-    """
-    function(trigger) {
-        // Select all input elements that might trigger a keyboard
-        document.querySelectorAll('.DateInput_input, .Select-input').forEach(function(el) {
-            el.addEventListener('focus', function() {
-                el.blur();
-            });
-        });
-        return null;
-    }
-    """,
-    Output('blur-trigger', 'data'),  # This is a no-op output just to trigger the script
-    Input('tabs-nav', 'value')  # Trigger on tab selection (or any other event)
-)
 
 # Run the app
 if __name__ == "__main__":
