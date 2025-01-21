@@ -208,7 +208,7 @@ def render_content(tab):
                         html.Div(
                             id="legend-info",
                             style={
-                                'display': 'none',  # Hidden by default
+                                'display': 'block',  # Hidden by default
                                 'backgroundColor': 'white',
                                 'border': '1px solid black',
                                 'padding': '10px',
@@ -1124,6 +1124,10 @@ def generate_csv_download_link(data):
     State("legend-info", "style")
 )
 def toggle_legend_visibility(n_clicks, current_style):
+    if n_clicks is None:
+        # If no clicks, return the default visible style (already set in layout)
+        return current_style
+    
     if n_clicks and current_style["display"] == "none":
         return {"display": "block", "backgroundColor": "white", "border": "1px solid black", "padding": "10px"}
     return {"display": "none"}
