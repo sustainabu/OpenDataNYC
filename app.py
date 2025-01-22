@@ -1,3 +1,6 @@
+import sys
+print(sys.executable)
+import dash_bootstrap_components as dbc
 from dash import Dash, html, dcc, callback, Output, Input, dash_table, State
 from datetime import date
 import plotly.express as px
@@ -5,8 +8,6 @@ import pandas as pd
 import plotly.graph_objects as go
 import matplotlib.pyplot as plt
 
-# Dash Bootstrap components
-import dash_bootstrap_components as dbc
 
 app = Dash(__name__, suppress_callback_exceptions=True, external_stylesheets=[dbc.themes.SANDSTONE],
            meta_tags=[{'name': 'viewport', 'content': 'width=device-width, initial-scale=1'},],) #,external_stylesheets=[dbc.themes.BOOTSTRAP]) #Added
