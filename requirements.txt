@@ -11,3 +11,4 @@ dash
 numpy
 scikit_learn
 gunicorn
+dash_mantine_components
