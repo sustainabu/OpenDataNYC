@@ -3,6 +3,8 @@ import dash_mantine_components as dmc
 from datetime import date
 import pandas as pd
 from dash import Dash, html, Output, Input,_dash_renderer
+
+# Explicitly set React version
 _dash_renderer._set_react_version("18.2.0")
 
 
