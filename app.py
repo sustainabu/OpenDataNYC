@@ -1,100 +1,103 @@
+import sys
+print(sys.executable)
 
+import dash
 import dash_mantine_components as dmc
-from datetime import date
-import pandas as pd
-from dash import Dash, html, Output, Input,_dash_renderer
+from dash import Dash, html, Output, Input, _dash_renderer
 
 # Explicitly set React version
 _dash_renderer._set_react_version("18.2.0")
 
-
-# Load data
-df = pd.read_csv(
-    "https://raw.githubusercontent.com/sustainabu/OpenDataNYC/refs/heads/main/311_BlockedBikeLane/dfc_out.csv"
-)
-
-# Data type adjustments
-df["dateTime"] = pd.to_datetime(df["dateTime"]).dt.date
-df["index_"] = df["index_"].astype(int)
-df["MinutesElapsed"] = df["MinutesElapsed"].astype(float)
-
-# Dropdown options
-board_options = ["All"] + sorted(df["cboard_expand"].dropna().unique().astype(str))
-
 # Initialize Dash app
-app = Dash(__name__, suppress_callback_exceptions=True, external_stylesheets=dmc.styles.ALL )
+app = Dash(__name__, suppress_callback_exceptions=True, external_stylesheets=dmc.styles.ALL,
+           meta_tags=[{'name': 'viewport', 'content': 'width=device-width, initial-scale=1'}])
 server = app.server
-
-app.title = "311 Blocked Bike Lane Dashboard"
-update_date = date(2024, 12, 31)
 
 # App layout
 app.layout = dmc.MantineProvider(
     forceColorScheme="light",
-    children= [
+    children=[
         html.Div([
-            dmc.Tabs([
-                dmc.TabsList([
-                    dmc.TabsTab("Discovery Mode", value="tab-1"),
-                    dmc.TabsTab("About", value="tab-2"),
-                ]),
-                dmc.TabsPanel(
-                    value="tab-1",
-                    children=[
-                        dmc.Text(
-                            f"Each record is a 311 Service Request for 'Blocked Bike Lane' Violation. "
-                            f"This dashboard explores NYPD response. **Last Updated: {update_date}**"
-                        ),
-                        dmc.Text("Select Parameters", ta="center", size="lg"),
-                        html.Div([
-                            # Start Date
-                            dmc.DatePickerInput(
-                                id="start-date",
-                                label="Start Date",
-                                description="Select the start date",
-                                value=date(2023, 1, 1).isoformat(),
-                                minDate=date(2021, 1, 1).isoformat(),
-                                maxDate=update_date.isoformat(),
-                                style={"marginRight": "20px", "marginBottom": "20px"}
-                            ),
-                            # End Date
-                            dmc.DatePickerInput(
-                                id="end-date",
-                                label="End Date",
-                                description="Select the end date",
-                                value=update_date.isoformat(),
-                                minDate=date(2021, 1, 1).isoformat(),
-                                maxDate=update_date.isoformat(),
-                                style={"marginBottom": "20px"}
-                            ),
-                        ], style={"display": "flex", "flexDirection": "row", "marginBottom": "20px"}),
+            # Burger button with a drawer
+            dmc.Group([
+                dmc.Burger(id="burger-menu", opened=False),
+                dmc.Text("311 Blocked Bike Lane Dashboard", size="xl")
+            ], style={"alignItems": "center", "marginBottom": "20px"}),
 
-                        # Dropdown
-                        dmc.Select(
-                            id="dropdown",
-                            label="Select Community Board",
-                            placeholder="Choose an option",
-                            data=[{"label": opt, "value": opt} for opt in board_options],
-                            value="All",
-                            style={"width": "300px", "marginBottom": "20px"},
-                            clearable=True
-                        ),
-                    ],
-                ),
-                dmc.TabsPanel(
-                    value="tab-2",
-                    children=[
-                        dmc.Text("Select Parameters", ta="center", size="lg"),
-                        dmc.Text("""
-                            ### Motivation:
-                            Explore and analyze NYC blocked bike lane reports.
-                        """),
-                    ],
-                ),
-            ])
+            # Drawer for navigation menu
+            dmc.Drawer(
+                id="drawer",
+                title="Navigation Menu",
+                padding="md",
+                size="sm",
+                children=[
+                    dmc.Menu(
+                        children=[
+                            dmc.MenuItem("Discovery Mode", id="drawer-tab-1"),
+                            dmc.MenuItem("About", id="drawer-tab-2"),
+                        ]
+                    )
+                ],
+                withCloseButton=True
+            ),
+
+            # Main Tabs for content
+            dmc.Tabs(
+                id="tabs",
+                value="tab-1",  # Default tab to open
+                children=[
+                    # Tab 1 content
+                    dmc.TabsPanel(
+                        value="tab-1",
+                        children=[
+                            dmc.Text("A-Man", ta="center", size="lg"),
+                            dmc.Text("""
+                                ### Motivation:
+                                Explore and analyze NYC blocked bike lane reports.
+                            """),
+                        ]
+                    ),
+                    # Tab 2 content
+                    dmc.TabsPanel(
+                        value="tab-2",
+                        children=[
+                            dmc.Text("B-Man", ta="center", size="lg"),
+                            dmc.Text("""
+                                ### Motivation:
+                                Explore and analyze NYC blocked bike lane reports.
+                            """),
+                        ]
+                    ),
+                ]
+            ),
         ])
     ]
 )
+
+# Combined callback for drawer and tabs
+@app.callback(
+    [Output("drawer", "opened"), Output("tabs", "value")],
+    [Input("burger-menu", "opened"),
+     Input("drawer-tab-1", "n_clicks"),
+     Input("drawer-tab-2", "n_clicks")],
+    prevent_initial_call=True
+)
+def handle_drawer_and_tabs(opened, tab1_clicks, tab2_clicks):
+    ctx = dash.callback_context
+    if not ctx.triggered:
+        return False, "tab-1"  # Default behavior
+    triggered_id = ctx.triggered[0]["prop_id"].split(".")[0]
+    
+    # Toggle drawer or switch tabs based on input
+    if triggered_id == "burger-menu":
+        return opened, dash.no_update  # Toggle drawer
+    elif triggered_id == "drawer-tab-1":
+        return False, "tab-1"  # Close drawer and switch to Tab 1
+    elif triggered_id == "drawer-tab-2":
+        return False, "tab-2"  # Close drawer and switch to Tab 2
+    
+    return False, "tab-1"  # Fallback behavior
+
 
 # Run the app
 if __name__ == "__main__":
