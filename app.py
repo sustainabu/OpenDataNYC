@@ -148,6 +148,7 @@ app.layout = dmc.MantineProvider(
                                             "scrollZoom": False,      # Disable zoom with scrolling
                                             "doubleClick": "reset",  # Reset the plot on double-click
                                             "displayModeBar": False,  # Enable the mode bar for other features
+                                            "staticPlot": True ,
                                         }),
                                 ]),
                             ]),
@@ -171,6 +172,7 @@ app.layout = dmc.MantineProvider(
                                             "scrollZoom": False,      # Disable zoom with scrolling
                                             "doubleClick": "reset",  # Reset the plot on double-click
                                             "displayModeBar": False,  # Enable the mode bar for other features
+                                            "staticPlot": True,
                                             }
                                     ),
                                 ]),
@@ -196,6 +198,7 @@ app.layout = dmc.MantineProvider(
                                             "scrollZoom": False,      # Disable zoom with scrolling
                                             "doubleClick": "reset",  # Reset the plot on double-click
                                             "displayModeBar": True,  # Enable the mode bar for other features
+                                            "staticPlot": True,
                                             }
                                     ),
                                 ]),
