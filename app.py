@@ -300,11 +300,49 @@ app.layout = dmc.MantineProvider(
                     dmc.TabsPanel(
                         value="tab-2",
                         children=[
-                            dmc.Text("B-Man", ta="center", size="lg"),
-                            dmc.Text("""
-                                ### Motivation:
-                                Explore and analyze NYC blocked bike lane reports.
-                            """),
+                            html.Div([
+                                dcc.Markdown('''
+                                        ### Data
+                                        ---
+                                        * The data is retrieved from [311 Service Requests]("https://data.cityofnewyork.us/Social-Services/311-Service-Requests-from-2010-to-Present/erm2-nwe9/about_data/") via NYC Open Data.
+                                        * Each record is a **reported** violation.
+                                        * NYPD resolution is binned to 4 categories. Often specific actions are excluded [See Table ]
+                                        * NYPD response time is the difference between 311 opening and closing time.
+                                        * For call-density, I used a nearest neighbor matching algorithm on the closed date
+                                        * Dashboard is accessible on [Github](https://github.com/sustainabu/OpenDataNYC).
+                                    '''
+                                    )
+                            ]),
+                                             
+                            dmc.Image(
+                                src="/assets/Table1.png",  # URL or local path to your image
+                                alt="Resolution Table",  # Alternative text
+                                w=400  # Width of the image in pixels
+                                #,radius="md",  # Optional: Add rounded corners ('xs', 'sm', 'md', 'lg', 'xl')
+                            ),
+                            
+
+                            html.Div([
+                                dcc.Markdown('''
+                                        ### Purpose
+                                        --- 
+                                        * Investigative reporting provided evidence of NYPD [non-responsiveness](https://nyc.streetsblog.org/2024/10/29/study-exposes-nypds-systemic-failure-to-enforce-safety-related-parking-violations) and [malpractice](https://nyc.streetsblog.org/2023/04/06/nypd-tickets-fewer-than-2-of-blocked-bike-lane-complaints-analysis).
+                                        * This is a community TOOL to monitor and measure progress of holding NYPD accountable.
+                                        * To learn more, check out my [Exploratory Report](https://nbviewer.org/github/sustainabu/OpenDataNYC/blob/main/311_BlockedBikeLane/BlockBikeLane%20Report_01_01_25.ipynb)
+                                        
+                                        ### Next Steps
+                                        ---
+                                        * I'm interested to explore using crowd-source validation as means to verify and hold NYPD accountable. If you are a developer, let's chat.
+                                        * Partner with local community organizations for an intentional campaign to improve biking violation enforcement.
+                                             
+                                        ### About Me
+                                        ---
+                                        * My name is Abu Nayeem. I'm a community advocate and Jamaica, Queens resident.
+                                        * I'm trained as an economist (MS Economics in UC Berkeley) and self-learned programmer.
+                                        * Contact Me (anayeem1@gmail.com)
+                                    '''
+                                    )
+                            ])
                         ]
                     ),
                 ]
