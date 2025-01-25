@@ -13,6 +13,7 @@ Here is a list of current data projects 📊
 * Primary Report: [NYC 311 Blocked Bike Lane Exploratory Report; 09/16/24](https://nbviewer.org/github/sustainabu/OpenDataNYC/blob/main/311_BlockedBikeLane/BlockBikeLane%20Report_01_01_25.ipynb)
 * Primary Workbook: [Link](https://github.com/sustainabu/OpenDataNYC/blob/main/311_BlockedBikeLane/311%20Bike%20Final%20Draft.ipynb)
 * Interactive Dashboard (Shiny Python): [Link](https://sustainabu.shinyapps.io/blockedbikelanedashboard/)
+* New Interactive Dashboard (Dash Plotly Render): [Link](https://three11blockedbikelane.onrender.com)
 
 
 ### NYC Hate Crime Analysis
