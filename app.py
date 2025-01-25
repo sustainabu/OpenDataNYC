@@ -126,6 +126,7 @@ app.layout = dmc.MantineProvider(
                             ]),
                             html.Div(className="container", children=[
                                 dcc.Markdown("### How does NYPD respond?", style={'textAlign': 'center'}),
+                                dcc.Markdown("**Note:** No specific action or reason is given for Action or No-Action category"),
                                 dcc.Graph(id="pie"),
                             ]), 
                             html.Div(className="container", children=[
@@ -310,20 +311,6 @@ app.layout = dmc.MantineProvider(
                                         * NYPD response time is the difference between 311 opening and closing time.
                                         * For call-density, I used a nearest neighbor matching algorithm on the closed date
                                         * Dashboard is accessible on [Github](https://github.com/sustainabu/OpenDataNYC).
-                                    '''
-                                    )
-                            ]),
-                                             
-                            dmc.Image(
-                                src="/assets/Table1.png",  # URL or local path to your image
-                                alt="Resolution Table",  # Alternative text
-                                w=400  # Width of the image in pixels
-                                #,radius="md",  # Optional: Add rounded corners ('xs', 'sm', 'md', 'lg', 'xl')
-                            ),
-                            
-
-                            html.Div([
-                                dcc.Markdown('''
                                         ### Purpose
                                         --- 
                                         * Investigative reporting provided evidence of NYPD [non-responsiveness](https://nyc.streetsblog.org/2024/10/29/study-exposes-nypds-systemic-failure-to-enforce-safety-related-parking-violations) and [malpractice](https://nyc.streetsblog.org/2023/04/06/nypd-tickets-fewer-than-2-of-blocked-bike-lane-complaints-analysis).
