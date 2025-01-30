@@ -77,9 +77,11 @@ app.layout = dmc.MantineProvider(
                     dmc.TabsPanel(
                         value="tab-1",
                         children=[
-                            dmc.Text(
-                                f"Each record is a 311 Service Request for 'Blocked Bike Lane' Violation. "
-                                f"This dashboard explores NYPD response. **Last Updated: {update_date}**"
+                            html.Div(
+                                [
+                                    html.Span("Each record is a NYC 311 Service Request handled by local law enforcement (NYPD) "),
+                                    html.B(f"Last Updated: {update_date}")
+                                ]
                             ),
                             html.Div(className="container", children=[
                                 dmc.Text("Select Parameters", ta="center", size="lg"),
@@ -126,12 +128,12 @@ app.layout = dmc.MantineProvider(
                             ]),
                             html.Div(className="container", children=[
                                 dcc.Markdown("### How does NYPD respond?", style={'textAlign': 'center'}),
-                                dcc.Markdown("**Note:** No specific action or reason is given for Action or No-Action category"),
+                                dcc.Markdown("**Note:** No specific action or reason is given for Action or No-Action category. A 'Summon' is similar to a fined ticket"),
                                 dcc.Graph(id="pie"),
                             ]), 
                             html.Div(className="container", children=[
                                 dcc.Markdown("### What is NYPD Response Time?", style={'textAlign': 'center'}),
-                                dcc.Markdown("**Note:** Response times less than 5 minutes are likely fraud by NYPD supported by investigative studies"),
+                                dcc.Markdown("**Note:** According to investigative studies, response times less than 5 mins is suspicious behavior."),
                                 html.Div([
                                     dcc.RadioItems(
                                         id="radio1",
@@ -307,20 +309,20 @@ app.layout = dmc.MantineProvider(
                                         ---
                                         * The data is retrieved from [311 Service Requests]("https://data.cityofnewyork.us/Social-Services/311-Service-Requests-from-2010-to-Present/erm2-nwe9/about_data/") via NYC Open Data.
                                         * Each record is a **reported** violation.
-                                        * NYPD resolution is binned to 4 categories. Often specific actions are excluded [See Table ]
                                         * NYPD response time is the difference between 311 opening and closing time.
-                                        * For call-density, I used a nearest neighbor matching algorithm on the closed date
-                                        * Dashboard is accessible on [Github](https://github.com/sustainabu/OpenDataNYC).
+                                        * For call-density, I used a nearest neighbor matching algorithm on the closed date.
+                                        * Dashboard Source Code is accessible on [Github](https://github.com/sustainabu/OpenDataNYC).
                                         ### Purpose
                                         --- 
                                         * Investigative reporting provided evidence of NYPD [non-responsiveness](https://nyc.streetsblog.org/2024/10/29/study-exposes-nypds-systemic-failure-to-enforce-safety-related-parking-violations) and [malpractice](https://nyc.streetsblog.org/2023/04/06/nypd-tickets-fewer-than-2-of-blocked-bike-lane-complaints-analysis).
-                                        * This is a community TOOL to monitor and measure progress of holding NYPD accountable.
+                                        * This is a community TOOL to monitor and measure progress.
                                         * To learn more, check out my [Exploratory Report](https://nbviewer.org/github/sustainabu/OpenDataNYC/blob/main/311_BlockedBikeLane/BlockBikeLane%20Report_01_01_25.ipynb)
                                         
                                         ### Next Steps
                                         ---
-                                        * I'm interested to explore using crowd-source validation as means to verify and hold NYPD accountable. If you are a developer, let's chat.
+                                        * I'm interested to explore using crowd-source validation as means to verify NYPD responses. If you are a developer, let's chat.
                                         * Partner with local community organizations for an intentional campaign to improve biking violation enforcement.
+                                        * Advocate for protected bike lanes over unprotected bike lanes.
                                              
                                         ### About Me
                                         ---
@@ -377,6 +379,14 @@ def update_graph(start_date, end_date, value):
             return value.split(':')[0]
         else:
             return "All"
+        
+    # Define specific colors for each resolution
+    color_map = {
+        "Late": "#FF474C",
+        "No-Action": "#FFA53F",
+        "Action": "lightgreen",
+        "Summon": "#63e5ff"  # Adjust as per your categories
+    }
 
     # Check if filtered_df is empty
     if filtered_df.empty:
@@ -400,7 +410,9 @@ def update_graph(start_date, end_date, value):
         grouped_data,
         names="resolution",
         values="Count",
-        title=f"Total Resolutions for {valueT()}: {filtered_df['index_'].sum()}"
+        title=f"Total Resolutions for {valueT()}: {filtered_df['index_'].sum()}",
+        color="resolution",
+        color_discrete_map=color_map
     )
 
     # Adjust the layout for the legend
